@@ -10,7 +10,9 @@ ctx.imageSmoothingEnabled = false;
 const lightCvs = document.createElement('canvas'); lightCvs.width = VW; lightCvs.height = VH;
 const lctx = lightCvs.getContext('2d');
 
-const IS_TOUCH = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+// touch = coarse pointer OR any touchscreen (iPad + Magic Keyboard reports a fine pointer)
+const IS_TOUCH = !!((window.matchMedia && matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
+document.documentElement.classList.toggle('touch', IS_TOUCH);
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const rnd = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -79,7 +81,7 @@ function resize() {
   st.style.width = w + 'px'; st.style.height = h + 'px';
   st.style.setProperty('--u', (w / 640) + 'px');
 }
-addEventListener('resize', resize); resize();
+addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 250)); resize();
 
 /* ---------------- Async helpers (generation-guarded) ---------------- */
 function wait(ms) { const g = G.gen; return new Promise(r => setTimeout(() => { if (g === G.gen) r(); }, ms)); }
@@ -410,7 +412,18 @@ function frozen() { return Input.layers.some(l => l.freeze); }
 function canMove() { return G.running && !G.dead && !Input.layers.length && (G.busy === 0 || G.allowMove) && !G.lockMove; }
 function canAct() { return G.running && !G.dead && !Input.layers.length && G.busy === 0; }
 
+const stageEl = $('#stage');
+let uiState = '';
+function syncUIClasses() {
+  const d = !$('#dialog').hidden, m = !$('#modal').hidden;
+  const menu = !$('#title-screen').hidden || !$('#gameover').hidden || !!document.querySelector('.end-screen');
+  const st = (d ? 'D' : '') + (m ? 'M' : '') + (menu ? 'T' : '');
+  if (st === uiState) return;
+  uiState = st;
+  stageEl.classList.toggle('ui-dialog', d); stageEl.classList.toggle('ui-modal', m); stageEl.classList.toggle('ui-menu', menu);
+}
 function loop(ts) {
+  syncUIClasses();
   const dt = Math.min(0.05, (ts - lastTs) / 1000 || 0); lastTs = ts;
   if (!frozen()) G.t += dt;
   try { update(dt); render(); } catch (e) { console.error(e); }

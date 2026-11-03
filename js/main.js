@@ -134,8 +134,8 @@ const MODE_NAME = { easy: 'ง่าย', hard: 'ยาก' };
 function pickMode(cb) {
   const t = $('#title-menu');
   menuList(t, [
-    ['ง่าย — บอกกฎที่ต้องระวังก่อนเริ่มแต่ละบท', () => cb('easy')],
-    ['ยาก — ไม่บอกกฎ ต้องจำหรือเปิดสมุดทบทวนเอง', () => cb('hard')],
+    ['ง่าย', () => cb('easy')],
+    ['ยาก', () => cb('hard')],
     ['← กลับ', () => showTitle()],
   ], { onCancel: showTitle });
 }
@@ -254,7 +254,7 @@ function startEnding(kind) {
     await say('', 'แสงแดดอุ่นๆ ส่องเข้ามาในโถงบ้าน ไม่มีคราบเลือด ไม่มีเสียงกรีดร้อง ทุกอย่างสะอาดเอี่ยม');
     await talk([
       ['ทนาย', 'ครบเจ็ดวันแล้วครับ คุณปฐพี ท่านทำได้ดีมาก'],
-      ['ทนาย', 'ตามสัญญา... บ้านหลังนี้ และเงินสดสามล้านบาท เป็นของท่านแล้ว'],
+      ['ทนาย', 'ตามสัญญา... คฤหาสน์หลังนี้ และเงินสดสามล้านบาท เป็นของท่านแล้ว'],
     ]);
     law.case = false;
     const bc = addObj({ id: 'case', x: 5, y: 5, draw: 'briefcase' });
@@ -357,7 +357,7 @@ function endScreen(kind) {
       <div class="k">ระดับความยาก</div><div>${MODE_NAME[G.mode]}</div>
       <div class="k">เศษความทรงจำที่พบ</div><div>${G.memories.length} / 8</div>
       ${kind === 'true' && G.memories.length >= 8 ? '<div style="color:#e9a">— มิ้นตอบตกลง —</div>' : ''}
-      <h3 class="big">แดนชำระ</h3><div>กฎ ๙ ข้อของบ้านมรดก</div>
+      <h3 class="big">แดนชำระ</h3><div>กฎ ๙ ข้อของมรดกคฤหาสน์</div>
       <div class="k">เรื่อง · ออกแบบเกม · ปริศนา</div><div>ทีมพัฒนา rpg-horror-home-game</div>
       <div class="k">โปรแกรม · ภาพพิกเซล · เสียงสังเคราะห์</div><div>สร้างขึ้นทั้งหมดด้วยโค้ด (Canvas + WebAudio)</div>
       <div class="k">แรงบันดาลใจ</div><div>สยองขวัญจิตวิทยา · แดนชำระ · ความรู้สึกผิดที่ไม่เคยพูดออกมา</div>
