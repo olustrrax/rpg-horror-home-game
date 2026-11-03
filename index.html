@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#000000">
+<title>แดนชำระ — 9 กฎของบ้านมรดก</title>
+<meta name="description" content="Psychological Horror RPG แบบ Top-down เล่นบนเว็บ ความยาวประมาณ 45–60 นาที">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,600;1,300&family=Taviraj:wght@300;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="game" width="640" height="360"></canvas>
+
+    <div id="hud" hidden>
+      <div id="hud-left">
+        <div id="hud-chapter"></div>
+        <div id="hud-obj"></div>
+      </div>
+      <div id="hud-right">
+        <div id="hud-clock"></div>
+        <div class="sanity"><span>สติ</span><div class="bar"><i id="sanity-fill"></i></div></div>
+        <div id="hud-keys">J สมุด · I ของ · Esc เมนู</div>
+      </div>
+    </div>
+
+    <div id="subtitle"></div>
+    <div id="toast"></div>
+
+    <div id="ring-ui" hidden>
+      <div class="ring-title">☎ โทรศัพท์กำลังดัง</div>
+      <div class="ring-hint">[E] รับสาย</div>
+      <div class="ring-bar"><i></i></div>
+      <div class="ring-count"></div>
+    </div>
+
+    <div id="qte" hidden>
+      <div class="qte-label"></div>
+      <div class="qte-bar"><i></i></div>
+    </div>
+
+    <div id="dialog" hidden>
+      <div id="dlg-name"></div>
+      <div id="dlg-text"></div>
+      <div id="dlg-next">▼</div>
+    </div>
+    <div id="choices" hidden></div>
+    <div id="modal" hidden></div>
+    <div id="fade"></div>
+    <div id="card-screen" hidden></div>
+
+    <div id="title-screen">
+      <div class="t-bg"></div>
+      <div class="t-inner">
+        <div class="t-pre">PURGATORY · 9 RULES OF THE INHERITED HOUSE</div>
+        <h1 class="t-title">แดนชำระ</h1>
+        <div class="t-sub">กฎ ๙ ข้อของบ้านมรดก</div>
+        <div class="t-menu" id="title-menu"></div>
+        <div class="t-note">แนะนำให้ใส่หูฟัง · เล่นในที่มืด · ความยาวประมาณ 45–60 นาที<br>มีเนื้อหาความรุนแรง ภาพสยองขวัญ และประเด็นความตาย</div>
+        <div class="t-controls">เดิน: ลูกศร / WASD &nbsp;·&nbsp; ตรวจสอบ/ยืนยัน: E / Space / Enter &nbsp;·&nbsp; สมุดกฎ: J &nbsp;·&nbsp; เมนู: Esc</div>
+      </div>
+    </div>
+
+    <div id="gameover" hidden></div>
+
+    <div id="touch">
+      <div class="dpad">
+        <button data-a="up" class="up">▲</button>
+        <button data-a="left" class="left">◀</button>
+        <button data-a="right" class="right">▶</button>
+        <button data-a="down" class="down">▼</button>
+      </div>
+      <div class="tbtns">
+        <button data-a="journal" class="small">สมุด</button>
+        <button data-a="pause" class="small">เมนู</button>
+        <button data-a="ok" class="big">E</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/audio.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/chapters.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
