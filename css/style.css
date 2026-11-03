@@ -186,3 +186,22 @@ html, body {
 #touch button.on { background: rgba(140, 30, 30, .6); }
 /* hide the d-pad while dialogue is on screen (it overlaps the text on phones) */
 #stage:has(#dialog:not([hidden])) #touch .dpad { opacity: 0; pointer-events: none; }
+@media (pointer: coarse) { .hint.kbd { display: none; } }
+.j-tabs .j-close { margin-left: auto; color: #e6c9b0; }
+/* panels have their own buttons: hide touch controls so they never cover them */
+#stage:has(#modal:not([hidden])) #touch { display: none; }
+html, body { touch-action: manipulation; overscroll-behavior: none; }
+#rotate { display: none; position: fixed; inset: 0; z-index: 50; background: #000; color: #d9c2ad; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 18px; line-height: 1.6; padding: 24px; }
+#rotate span { font-size: 13px; color: #7a6a5e; }
+#rotate .rot-icon { font-size: 54px; color: #a33; animation: rot 2s ease-in-out infinite; }
+@keyframes rot { 0%, 30% { transform: rotate(0) } 60%, 100% { transform: rotate(90deg) } }
+/* phones held upright: ask to rotate (tablets in portrait are wide enough to play) */
+@media (pointer: coarse) and (orientation: portrait) and (max-width: 600px) { #rotate { display: flex; } }
+.rules-card { min-width: 52%; max-width: 76%; }
+.rules-card .rule { font-size: calc(var(--u) * 12); padding: calc(var(--u) * 5) 0; }
+.rules-card .rc-tip { margin-top: calc(var(--u) * 10); font-size: calc(var(--u) * 11); color: #e2a59a; line-height: 1.5; }
+/* panels (rule card, notes, puzzles) must sit above the chapter title card and fade overlay */
+#modal { z-index: 6; }
+/* touch controls are only needed in-game; keyboard help is only useful with a keyboard */
+#stage:has(#title-screen:not([hidden])) #touch, #stage:has(#gameover:not([hidden])) #touch, #stage:has(.end-screen) #touch { display: none; }
+@media (pointer: coarse) { .t-controls { display: none; } }

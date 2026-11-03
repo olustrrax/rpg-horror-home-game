@@ -36,6 +36,30 @@ const MEMS = [
   { find: 'ในกระเป๋าเสื้อโค้ทมีเมมโมรี่การ์ดจากกล้องหน้ารถ', mem: 'เสียงสุดท้ายก่อนแรงกระแทก — "ปฐพี! มองถนนสิ!!"' },
 ];
 
+
+/* ---------- difficulty ---------- */
+const EASY = () => G.mode !== 'hard';
+const ez = (easy, hard) => (EASY() ? easy : hard);
+const CH_RULES = {
+  1: { rules: [8], tip: 'คำเตือนของทนาย: หลังสวมรองเท้า ห้ามเดินถอยหลัง (ห้ามกดลง)' },
+  2: { rules: [2], tip: 'ทางเดินจะวนกลับที่เดิม — สังเกตสิ่งที่เปลี่ยนไปในแต่ละรอบ' },
+  3: { rules: [3], tip: 'ใส่วัตถุดิบตามตัวเลขบนผนัง เทียบกับจำนวนในการ์ดสูตร แล้วต้องกินให้หมด' },
+  4: { rules: [5], tip: 'หลบแสงไฟหน้ารถหลังเฟอร์นิเจอร์ แล้วตั้งนาฬิกาหัวเตียงให้เป็น 12:00' },
+  5: { rules: [6], tip: 'ปล่อยให้โทรศัพท์ดังจนเงียบ 5 ครั้ง — ห้ามกดรับ ห้ามขยับ' },
+  6: { rules: [4], tip: 'อ่านตารางรดน้ำให้ดี รดผิดต้นต้องเริ่มใหม่ทั้งหมด' },
+  7: { rules: [1], tip: 'เดินถูตามรอยเลือด ม็อบเต็มต้องไปบิดที่ถัง และระวังสิ่งที่คลานออกมา' },
+  8: { rules: [8], tip: 'ถามคนหลังประตูก่อนตัดสินใจ — จำสิ่งที่เงาในกระจกเคยบอกไว้' },
+  9: { rules: [7, 9], tip: 'ในบทนี้ การละเมิดกฎคือทางเดียวที่จะไปต่อ — ทางเลือกของคุณกำหนดตอนจบ' },
+};
+async function showChapterRules() {
+  const d = CH_RULES[G.chapter];
+  if (!EASY() || !d) return;
+  await showHTML(`<div class="panel rules-card"><h2>กฎที่ต้องระวังในบทนี้</h2>
+    ${d.rules.map(n => `<div class="rule"><b>ข้อ ${n}.</b> ${RULES[n - 1]}</div>`).join('')}
+    <div class="rc-tip">◆ ${d.tip}</div>
+    <div class="hint">โหมดง่าย · แตะหรือกด E เพื่อเริ่ม</div></div>`);
+}
+
 function revealRule(n) { if (G.notes[n]) return; G.notes[n] = true; Sound.glitch(); G.fx.glitch = 0.4; toast(`สมุดกฎ: ข้อ ${n} ถูกเขียนทับด้วยหมึกแดง`, 'red', 2800); }
 async function memory(i) {
   if (G.memories.includes(i)) { await say('', 'ไม่มีอะไรเหลืออยู่ตรงนี้แล้ว'); return; }
@@ -170,11 +194,11 @@ const CH1 = {
       ['ทนาย', 'คนที่รักท่านมากที่สุดครับ'],
       ['ทนาย', 'เงื่อนไขมีเพียงอย่างเดียวครับ — อยู่ในบ้านหลังนั้นให้ครบเจ็ดวัน โดยทำตามกฎทั้งเก้าข้อ ห้ามละเมิดแม้แต่ข้อเดียว'],
     ]);
-    addItem('rules', 'สมุดกฎ ๙ ข้อ', 'สมุดปกหนังสีดำ ลายมือเขียนกฎเก้าข้อ กระดาษบางหน้ายังเปียกชื้น');
-    toast('กด J เพื่อเปิดสมุดกฎ', '', 3000);
+    addItem('rules', 'สมุดกฎ ๙ ข้อ', 'สมุดปกหนังสีดำ เขียนกฎเก้าข้อด้วยลายมือ กระดาษบางหน้ายังชื้นอยู่');
+    toast(IS_TOUCH ? 'แตะปุ่ม "สมุด" เพื่อเปิดสมุดกฎ' : 'กด J เพื่อเปิดสมุดกฎ', '', 3000);
     await talk([
       ['ทนาย', 'และนี่คือกุญแจบ้าน'],
-      () => addItem('housekey', 'กุญแจบ้าน', 'กุญแจทองเหลืองเก่า ด้ามเย็นเหมือนน้ำแข็ง'),
+      () => addItem('housekey', 'กุญแจบ้าน', 'กุญแจทองเหลืองเก่า เย็นเฉียบเหมือนน้ำแข็ง'),
       ['ทนาย', 'ประตูบานนั้นจะพาท่านกลับบ้าน... อ้อ อีกเรื่อง'],
       ['ทนาย', 'อย่าเดินถอยหลังนะครับ คนที่ถอยหลังมักจะได้เห็นสิ่งที่ตัวเองไม่อยากเห็น'],
     ]);
@@ -232,7 +256,7 @@ const CH1 = {
     await say('', 'ประตูหน้าบ้าน ลูกบิดมีรอยนิ้วมือเล็กๆ เปื้อนเขม่าดำ... นิ้วมือเด็ก');
     await thought('บ้านนี้ไม่น่าจะมีเด็ก... หรือมันไม่ใช่นิ้วเด็ก แต่เป็นนิ้วที่ถูกไฟไหม้จนหดเล็กลง');
     Sound.locked();
-    await say('', 'ประตูไม่ยอมเปิด แล้วกฎข้อ 8 ก็ผุดขึ้นมาในหัว: "ห้ามออกจากบ้านหลังเที่ยงคืน"');
+    await say('', ez('ประตูไม่ยอมเปิด แล้วกฎข้อ 8 ก็ผุดขึ้นมาในหัว: "ห้ามออกจากบ้านหลังเที่ยงคืน"', 'ประตูไม่ยอมเปิด ลูกบิดเย็นจนมือชา'));
   },
   async shoes(o) {
     if (G.flags.shoes) { await say('', 'ชั้นวางรองเท้าว่างเปล่า มีรอยเลือดเป็นวงกลมสองวงอยู่ตรงที่เคยวางรองเท้า'); return; }
@@ -248,9 +272,9 @@ const CH1 = {
     await say('', 'แกร๊ก... เสียงกลอนที่ประตูด้านในเลื่อนเปิดออกเอง');
     const inner = getObj('inner'); if (inner) inner.open = true;
     await wait(300);
-    await say('เสียงทนาย', 'ยินดีต้อนรับกลับบ้านครับ คุณปฐพี... เดินตรงไปข้างหน้า อย่าถอยหลัง', { cls: 'lawyer' });
+    await say('เสียงทนาย', ez('ยินดีต้อนรับกลับบ้านครับ คุณปฐพี... เดินตรงไปข้างหน้า อย่าถอยหลัง', 'ยินดีต้อนรับกลับบ้านครับ คุณปฐพี'), { cls: 'lawyer' });
     G.flags.noBack = true;
-    setObjective('เดินไปที่ประตูด้านใน — ห้ามเดินถอยหลัง');
+    setObjective(ez('เดินไปที่ประตูด้านใน — ห้ามเดินถอยหลัง', 'เดินไปที่ประตูด้านใน'));
   },
   async backward() {
     if (G.flags.backCd && G.t < G.flags.backCd) return;
@@ -295,7 +319,7 @@ const CH2 = {
       await fade(0, 1500);
       await say('', 'แดดบ่ายสีเลือดหมูส่องเฉียงผ่านหน้าต่าง ทั้งที่เมื่อครู่ยังเป็นเที่ยงคืน');
       await thought('ทางเดินนี้ยาวผิดปกติ... สุดทางมีประตูอยู่บานหนึ่ง กลิ่นเนื้อไหม้ลอยมาจากตรงนั้น');
-      setObjective('ไปให้ถึงประตูที่สุดทางเดิน');
+      setObjective('ไปให้ถึงประตูสุดทางเดิน');
     });
   },
   map() {
@@ -341,7 +365,7 @@ const CH2 = {
       const p = G.player; p.x = p.tx = 3; p.fx = 3; p.moving = false;
       ['f1', 'f2', 'f3'].forEach(id => { const f = getObj(id); f.stage = Math.min(3, L); f.tilt = L % 2 === 1; });
       await wait(250);
-      if (L === 1) { subtitle('...ทางเดินเดิม ประตูบานเดิม', 2600); await thought('ฉันเพิ่งเดินผ่านตรงนี้ไป... ทำไมกลับมาอยู่ที่เดิม'); setObjective('ทางเดินวนซ้ำ... มีบางอย่างเปลี่ยนไปในแต่ละรอบ'); }
+      if (L === 1) { subtitle('...ทางเดินเดิม ประตูบานเดิม', 2600); await thought('ฉันเพิ่งเดินผ่านตรงนี้ไป... ทำไมกลับมาอยู่ที่เดิม'); setObjective('ทางเดินวนกลับที่เดิม — สังเกตสิ่งที่เปลี่ยนไปในแต่ละรอบ'); }
       if (L === 2) {
         Sound.creak(); Sound.hair();
         const d = getObj('drawer'); d.open = true;
@@ -362,7 +386,7 @@ const CH2 = {
     ];
     await say('', txt[L]);
     if (i === 2 && L >= 2) await memory(2);
-    if (o.tilt) { await say('', 'กรอบรูปเอียงอยู่ ฉันจัดให้ตรง... กฎข้อ 2 "ของหยิบมาจากไหน ให้วางคืนที่เดิม"'); o.tilt = false; }
+    if (o.tilt) { await say('', ez('กรอบรูปเอียงอยู่ ฉันจัดให้ตรง... กฎข้อ 2 "ของหยิบมาจากไหน ให้วางคืนที่เดิม"', 'กรอบรูปเอียงอยู่ ฉันจัดให้ตรงโดยไม่ได้คิด... เหมือนมีอะไรสั่งให้ทำ')); o.tilt = false; }
   },
   async chair(o) {
     if (G.flags.sat) { await say('', 'เบาะเก้าอี้มีรูทะลุรูปกระดูกสันหลัง ยังอุ่นอยู่'); return; }
@@ -406,7 +430,7 @@ const CH2 = {
     await say('', 'ฉันล้วงมือลงไปในกองเส้นผม มันเปียกและอุ่น... ปลายนิ้วสะดุดกับการ์ดแข็งๆ แผ่นหนึ่ง');
     await say('', 'การ์ดแผ่นนั้นมีเศษเนื้อติดอยู่เป็นจุดๆ');
     await this.readRecipe();
-    addItem('recipe', 'การ์ดสูตรอาหาร', 'การ์ดสูตร "ข้าวผัดของมิ้น" เปื้อนเศษเนื้อ — อ่านได้จากสมุด (I)');
+    addItem('recipe', 'การ์ดสูตรอาหาร', 'การ์ดสูตร "ข้าวผัดของมิ้น" เปื้อนเศษเนื้อ — เปิดอ่านซ้ำได้ในสมุด');
     G.flags.recipe = true;
     G.flags.loopBroken = true;
     Sound.rumble(1.2);
@@ -454,7 +478,7 @@ const CH3 = {
       await say('', 'ห้องครัวคละคลุ้งไปด้วยกลิ่นเนื้อไหม้ ตู้เย็นสั่นสะท้าน มีเสียงกระแทกดังมาจากข้างใน');
       Sound.bang();
       await thought('ประตูที่ฉันเพิ่งเดินเข้ามา... หายไปแล้ว');
-      await thought('กฎข้อ 3 — กินเฉพาะอาหารที่ทำในครัวนี้ ...ฉันคงต้องทำอาหารตามการ์ดนั่น');
+      if (EASY()) await thought('กฎข้อ 3 — กินเฉพาะอาหารที่ทำในครัวนี้ ...ฉันคงต้องทำอาหารตามการ์ดนั่น');
       setObjective('หาวัตถุดิบ แล้วทำ "ข้าวผัดของมิ้น" ที่เตา');
     });
   },
@@ -530,7 +554,7 @@ const CH3 = {
     const c = await choose(opts.map(x => x[1]).concat(['ปิดตู้']));
     if (c < 0 || c >= opts.length) return;
     const id = opts[c][0];
-    addItem(id, ING[id], id === 'egg' ? 'ไข่สี่ฟอง เปลือกบางจุดนิ่มยุบลงไป' : 'ชิ้นเนื้อสามชิ้น มีต่างหูมุกฝังอยู่ในชิ้นหนึ่ง');
+    addItem(id, ING[id], id === 'egg' ? 'ไข่สี่ฟอง เปลือกนิ่มยุบลงไปเป็นบางจุด' : 'ชิ้นเนื้อสามชิ้น ชิ้นหนึ่งมีต่างหูมุกฝังอยู่');
     if (id === 'meat') { await thought('ต่างหูนี่... ฉันซื้อให้ใครบางคน'); }
   },
   async stove(o) {
@@ -556,7 +580,7 @@ const CH3 = {
       panel.innerHTML = `<h2>กระทะบนเตา</h2><div class="pz-num">ใส่วัตถุดิบทีละอย่าง ครบสี่อย่างแล้วไฟจะติด</div>
         <div class="pz-row slots"></div><div class="pz-row btns"></div>
         <div class="pz-row"><button class="pz-btn" data-k="clear">เทออก</button><button class="pz-btn" data-k="card">ดูการ์ดสูตร</button><button class="pz-btn" data-k="close">ถอยออกมา</button></div>
-        <div class="hint">← → เลือก · E ใส่ · X ปิด</div>`;
+        <div class="hint kbd">← → เลือก · E ใส่ · X ปิด</div>`;
       const slots = panel.querySelector('.slots'), btns = panel.querySelector('.btns');
       const allBtns = [];
       function draw() {
@@ -623,7 +647,7 @@ const CH3 = {
     await this.eat(o);
   },
   async eat(o) {
-    const c = await choose(['กิน (กฎข้อ 3)', 'ยังไม่กิน']);
+    const c = await choose([ez('กิน (กฎข้อ 3)', 'กิน'), 'ยังไม่กิน']);
     if (c !== 0) { await say('', 'ท้องฉันบิดเหมือนมีอะไรข่วนอยู่ข้างใน'); hurt(3); return; }
     G.playerPose = null;
     await say('', 'ฉันตักเข้าปาก...');
@@ -635,7 +659,7 @@ const CH3 = {
     await wait(300);
     hurt(8);
     await say('', 'ฉันสำลัก คายเศษกระจกปนเลือดออกมาเต็มฝ่ามือ... มีเข็มนาฬิกาสีทองอันเล็กปนอยู่ด้วย');
-    addItem('hand', 'เข็มนาฬิกาสั้น', 'เข็มชั่วโมงสีทอง ยังเปื้อนข้าวผัดสีดำ');
+    addItem('hand', 'เข็มนาฬิกาสั้น', 'เข็มชั่วโมงสีทอง ยังมีข้าวผัดสีดำติดอยู่');
     G.flags.ate = true; o.dish = false;
     revealRule(3);
     Sound.unlock();
@@ -666,8 +690,8 @@ const CH4 = {
       await fade(0, 1500);
       await say('', 'ห้องนอนมืดสลัว ทั้งที่ใกล้เที่ยงวัน หน้าต่างกลับมีแสงไฟหน้ารถสองดวงสาดเข้ามาเป็นระยะ');
       await thought('ข้างนอกไม่มีถนนสักหน่อย... แล้วรถคันนั้นมาจากไหน');
-      await say('', 'ไม่รู้ทำไม แต่ฉันรู้ว่าต้องไม่ให้แสงนั่นส่องโดนตัว... ต้องหลบหลังเฟอร์นิเจอร์ หรือรอให้แสงผ่านไปก่อน');
-      setObjective('พูดกับกระจกตอนเที่ยงตรง (กฎข้อ 5)');
+      if (EASY()) await say('', 'ไม่รู้ทำไม แต่ฉันรู้ว่าต้องไม่ให้แสงนั่นส่องโดนตัว... ต้องหลบหลังเฟอร์นิเจอร์ หรือรอให้แสงผ่านไปก่อน');
+      setObjective(ez('พูดกับกระจกตอนเที่ยงตรง (กฎข้อ 5)', 'สำรวจห้องนอน'));
     });
   },
   map() {
@@ -747,7 +771,7 @@ const CH4 = {
       await say('', 'ฉันใส่เข็มสีทองที่คายออกมาจากปากลงไป... พอดีเป๊ะ');
       removeItem('hand'); G.flags.handIn = true;
       Sound.unlock();
-      await say('', 'เข็มชี้ที่ 2:17 — สิบสี่นาฬิกาสิบเจ็ดนาที');
+      await say('', 'นาฬิกาบอกเวลา 14:17 — บ่ายสองโมงสิบเจ็ดนาที');
     }
     const ok = await this.clockUI();
     if (!ok) return;
@@ -765,30 +789,31 @@ const CH4 = {
       let mins = 14 * 60 + 17;
       const panel = document.createElement('div'); panel.className = 'panel pz-center';
       panel.innerHTML = `<h2>นาฬิกาหัวเตียง</h2>
-        <div class="clockwrap"><svg viewBox="-50 -50 100 100"></svg><div><div class="digital"></div><div class="pz-num" style="margin-top:6px">ตั้งเวลา "เที่ยงตรง"</div></div></div>
+        <div class="clockwrap"><svg viewBox="-50 -50 100 100"></svg><div><div class="digital"></div><div class="pz-num" style="margin-top:6px">${ez('ตั้งเวลา "เที่ยงตรง"', 'ตั้งเวลา')}</div></div></div>
         <div class="pz-row"><button class="pz-btn" data-d="-60">◀◀ ชม.</button><button class="pz-btn" data-d="-5">◀ 5 น.</button><button class="pz-btn" data-d="5">5 น. ▶</button><button class="pz-btn" data-d="60">ชม. ▶▶</button></div>
         <div class="pz-row"><button class="pz-btn" data-k="ok">ตั้งเวลา</button><button class="pz-btn" data-k="x">ถอยออกมา</button></div>
-        <div class="hint">← → ทีละ 5 นาที · ↑ ↓ ทีละชั่วโมง · E ยืนยัน · X ปิด</div>`;
+        <div class="hint kbd">← → ทีละ 5 นาที · ↑ ↓ ทีละชั่วโมง · E ยืนยัน · X ปิด</div>`;
       const svg = panel.querySelector('svg'), dig = panel.querySelector('.digital');
       function draw() {
-        const hh = Math.floor(((mins % 720) + 720) % 720 / 60), mm = ((mins % 60) + 60) % 60;
+        const t24 = ((mins % 1440) + 1440) % 1440, hh = Math.floor(t24 / 60), mm = t24 % 60;
         let s = '<circle r="46" fill="#cdbf9f" stroke="#2a1a10" stroke-width="4"/>';
         const nums = ['12', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'];
         nums.forEach((n, i) => { const a = i / 12 * Math.PI * 2; s += `<text x="${Math.sin(a) * 36}" y="${-Math.cos(a) * 36 + 3}" font-size="8" text-anchor="middle" fill="#3a1a10" font-family="serif">${n}</text>`; });
         s += '<circle cx="-14" cy="18" r="9" fill="rgba(110,10,10,.35)"/>';
-        const ha = ((hh + mm / 60) / 12) * Math.PI * 2, ma = (mm / 60) * Math.PI * 2;
+        const ha = (((hh % 12) + mm / 60) / 12) * Math.PI * 2, ma = (mm / 60) * Math.PI * 2;
         s += `<line x1="0" y1="0" x2="${Math.sin(ha) * 22}" y2="${-Math.cos(ha) * 22}" stroke="#a8862a" stroke-width="4" stroke-linecap="round"/>`;
         s += `<line x1="0" y1="0" x2="${Math.sin(ma) * 34}" y2="${-Math.cos(ma) * 34}" stroke="#111" stroke-width="2" stroke-linecap="round"/><circle r="3" fill="#111"/>`;
         svg.innerHTML = s;
-        dig.textContent = String(hh === 0 ? 12 : hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+        dig.textContent = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
       }
       let h;
       const adj = d => { mins += d; if (Math.abs(d) === 5) mins = Math.round(mins / 5) * 5; Sound.tick(); draw(); };
       const fin = v => { h.close(); if (g0 === G.gen) res(v); };
       const confirm = async () => {
-        const hh = Math.floor(((mins % 720) + 720) % 720 / 60), mm = ((mins % 60) + 60) % 60;
-        if (hh === 0 && mm === 0) { Sound.dong(); fin(true); }
-        else { Sound.glitch(); mins = 14 * 60 + 17; draw(); dig.textContent = '14:17'; G.fx.glitch = 0.3; panel.querySelector('.pz-num').textContent = 'เข็มดีดกลับไปที่ 14:17 เอง... ต้องเป็น "เที่ยงตรง" เท่านั้น'; }
+        const t24 = ((mins % 1440) + 1440) % 1440;
+        if (t24 === 12 * 60) { Sound.dong(); fin(true); return; }
+        if (t24 === 0) { Sound.glitch(); G.fx.glitch = 0.4; mins = 14 * 60 + 17; draw(); panel.querySelector('.pz-num').textContent = ez('นั่นคือเที่ยงคืน... เข็มดีดกลับไปที่ 14:17 เอง ต้องเป็นเที่ยงวัน', 'เข็มดีดกลับไปที่ 14:17 เอง...'); return; }
+        else { Sound.glitch(); mins = 14 * 60 + 17; draw(); dig.textContent = '14:17'; G.fx.glitch = 0.3; panel.querySelector('.pz-num').textContent = ez('เข็มดีดกลับไปที่ 14:17 เอง... ต้องเป็น "เที่ยงตรง" เท่านั้น', 'เข็มดีดกลับไปที่ 14:17 เอง...'); }
       };
       panel.querySelectorAll('[data-d]').forEach(b => b.onclick = () => adj(+b.dataset.d));
       panel.querySelector('[data-k=ok]').onclick = confirm;
@@ -811,7 +836,7 @@ const CH4 = {
       return;
     }
     await say('', 'กระจกใสแจ๋ว เงาของฉันยืนอยู่ในนั้น... แต่ห้องในกระจกมืดกว่าห้องจริง');
-    const c = await choose(['"ฉันสบายดี ทุกอย่างปกติ"', '"ฉันไม่ได้ทำอะไรผิด"', '"...ฉันเป็นใคร"'], { prompt: 'กฎข้อ 5: พูดกับกระจกตอนเที่ยง' });
+    const c = await choose(['"ฉันสบายดี ทุกอย่างปกติ"', '"ฉันไม่ได้ทำอะไรผิด"', '"...ฉันเป็นใคร"'], { prompt: ez('กฎข้อ 5: พูดกับกระจกตอนเที่ยง', 'จะพูดอะไรกับกระจก') });
     const lines = ['ฉันสบายดี ทุกอย่างปกติ', 'ฉันไม่ได้ทำอะไรผิด', 'ฉันเป็นใคร'];
     await say('ปฐพี', lines[Math.max(0, c)] + '...');
     await wait(600);
@@ -830,7 +855,7 @@ const CH4 = {
     ]);
     o.cracked = true; Sound.shatter(); shake(8, 500);
     await say('', 'เพล้ง! กระจกร้าว มือของเงาทะลุรอยแตกออกมา ยื่นกุญแจเปื้อนเลือดดอกหนึ่งให้ฉัน');
-    addItem('studykey', 'กุญแจห้องทำงาน', 'กุญแจเปียกเลือด ยังอุ่นเหมือนเพิ่งออกมาจากในตัวใคร');
+    addItem('studykey', 'กุญแจห้องทำงาน', 'กุญแจเปียกเลือด ยังอุ่นเหมือนเพิ่งหลุดออกมาจากในตัวใครสักคน');
     G.flags.mirrorDone = true;
     revealRule(5);
     setObjective('ไปที่ห้องทำงาน (ประตูมุมขวาล่าง)');
@@ -919,24 +944,25 @@ const CH5 = {
   },
   async intro() {
     await say('', 'กริ๊ง— โทรศัพท์บ้านดังขึ้นกลางความมืด');
-    await thought('กฎข้อ 6... "ได้ยินเสียงเรียก ห้ามทัก ห้ามตอบ"');
-    await say('', 'ที่หูโทรศัพท์มีโน้ตแปะไว้ ลายมือเดียวกับบนนามบัตร: "ยืนนิ่งๆ อย่าขยับ อย่ารับสาย จนกว่ามันจะเงียบไปเอง"');
-    setObjective('ห้ามรับสาย ห้ามขยับ — ปล่อยให้มันดังจนเงียบ (0/5)');
+    if (EASY()) await thought('กฎข้อ 6... "ได้ยินเสียงเรียก ห้ามทัก ห้ามตอบ"');
+    if (EASY()) await say('', 'ที่หูโทรศัพท์มีโน้ตแปะไว้ ลายมือเดียวกับบนนามบัตร: "ยืนนิ่งๆ อย่าขยับ อย่ารับสาย จนกว่ามันจะเงียบไปเอง"');
+    setObjective(this.callObj(0));
     G.allowMove = true;
     this.st.count = 0;
     this.startRing();
   },
+  callObj(n) { return ez(`ห้ามรับสาย ห้ามขยับ — รอจนเสียงเงียบไปเอง (${n}/5)`, 'โทรศัพท์ยังดังอยู่ในความมืด'); },
   startRing() {
     const s = this.st;
     s.phase = 'ring'; s.t = 6.5; s.moved = false; s.ringSnd = 0;
     $('#ring-ui').hidden = false;
-    $('#ring-ui .ring-count').textContent = `สายที่ไม่ได้รับ ${s.count}/5`;
+    $('#ring-ui .ring-count').textContent = ez(`สายที่ไม่ได้รับ ${s.count}/5`, `สายที่ไม่ได้รับ ${s.count}`);
     setTimeout(() => { if (this.st.phase === 'ring') { Sound.breath(); subtitle(MINT_CALLS[Math.min(4, s.count)], 5200, 'mint'); } }, 1600);
   },
   movedDuringRing() {
     const s = this.st; s.moved = true;
     Sound.creak(); hurt(4);
-    subtitle('เสียงพื้นไม้ลั่นเอี๊ยด... "เธออยู่ตรงนั้นจริงๆ ด้วย" (สายนี้ไม่นับ)', 2600, 'whisper');
+    subtitle(ez('พื้นไม้ลั่นเอี๊ยด... "เธออยู่ตรงนั้นจริงๆ ด้วย" (สายนี้ไม่นับ)', 'พื้นไม้ลั่นเอี๊ยด... "เธออยู่ตรงนั้นจริงๆ ด้วย"'), 2600, 'whisper');
   },
   interceptOk() {
     const s = this.st;
@@ -949,9 +975,9 @@ const CH5 = {
     $('#ring-ui').hidden = true; clearSubtitle();
     if (ok && !s.moved) {
       s.count++;
-      setObjective(`ห้ามรับสาย ห้ามขยับ — ปล่อยให้มันดังจนเงียบ (${s.count}/5)`);
+      setObjective(this.callObj(s.count));
       if (s.count >= 5) { s.phase = 'done'; G.allowMove = false; run(() => this.callsDone()); return; }
-      toast(`สายที่ไม่ได้รับ ${s.count}/5`);
+      toast(ez(`สายที่ไม่ได้รับ ${s.count}/5`, `สายที่ไม่ได้รับ ${s.count}`));
     }
     s.phase = 'gap'; s.t = 2.6;
   },
@@ -969,7 +995,7 @@ const CH5 = {
       await say('มิ้น', 'ตอนนั้นเธอไม่ตอบฉัน!! อย่ามาตอบตอนนี้!!', { speed: 14 });
       await say('', 'สายตัดไป... ความเงียบกลับมา และฉันรู้ว่าต้องเริ่มนับใหม่ทั้งหมด');
       s.count = 0;
-      setObjective('ห้ามรับสาย ห้ามขยับ — ปล่อยให้มันดังจนเงียบ (0/5)');
+      setObjective(this.callObj(0));
       G.allowMove = true;
       s.phase = 'gap'; s.t = 3;
     });
@@ -992,7 +1018,7 @@ const CH5 = {
     }
     if (G.flags.schedule) { await say('', 'ลิ้นชักว่างเปล่า มีแต่ลิ่มเลือดเกาะเป็นแผ่น'); return; }
     await this.readSchedule();
-    addItem('schedule', 'ตารางรดน้ำตีสาม', 'กระดาษเปื้อนลิ่มเลือด บอกลำดับการรดน้ำต้นไม้ — อ่านได้จากสมุด (I)');
+    addItem('schedule', 'ตารางรดน้ำตีสาม', 'กระดาษเปื้อนลิ่มเลือด บอกลำดับการรดน้ำต้นไม้ — เปิดอ่านซ้ำได้ในสมุด');
     G.flags.schedule = true;
     setClock('03:00'); Sound.dong();
     await say('', 'นาฬิกาที่ไหนสักแห่งตีบอกเวลา... ตีสาม');
@@ -1072,7 +1098,7 @@ const CH6 = {
         G: tree('tG', 'ต้นไม้ข้างบ่อน้ำ ทุกกิ่งชี้ลงไปในบ่อ'),
         W: { id: 'well', draw: 'well', mem: 6, on: async () => { await say('', 'บ่อน้ำเก่า ข้างล่างมืดสนิท ได้ยินเสียงน้ำหยดเป็นจังหวะ'); await memory(6); } },
         U: { id: 'faucet', draw: 'faucet', drip: true, on: async () => self.faucet() },
-        N: { id: 'can', draw: 'can', on: async o => { await say('', 'บัวรดน้ำสังกะสีเก่า ก้นบัวมีคราบสีแดงเกาะหนา'); addItem('can', 'บัวรดน้ำ', 'บัวรดน้ำสังกะสี ตักได้ทีละสามครั้ง'); o.hidden = true; setObjective('เติมน้ำที่ก๊อก แล้วรดน้ำต้นไม้ตามตาราง'); } },
+        N: { id: 'can', draw: 'can', on: async o => { await say('', 'บัวรดน้ำสังกะสีเก่า ก้นบัวมีคราบสีแดงเกาะหนา'); addItem('can', 'บัวรดน้ำ', 'บัวรดน้ำสังกะสี เติมหนึ่งครั้งรดได้สามต้น'); o.hidden = true; setObjective('เติมน้ำที่ก๊อก แล้วรดน้ำต้นไม้ตามตาราง'); } },
         S: { id: 'mound', draw: 'soilMound', tile: 's', on: async o => self.mound(o) },
         Z: { id: 'back', draw: 'door', layer: 'wall', color: '#1a1a14', on: async () => self.backDoor() },
         Y: { id: 'gate', draw: 'doorBottom', layer: 'wall', chainLock: true, color: '#1d1712', on: async () => { await say('', 'ประตูรั้วถูกล่ามโซ่ไว้หลายชั้น ข้างนอกเป็นถนนมืดๆ ที่ไม่มีไฟสักดวง'); await thought('ทางนี้... เธอเคยเดินเข้ามาทุกเย็น'); } },
@@ -1113,7 +1139,7 @@ const CH6 = {
       if (this.st.seq === 3) await this.solved();
     } else {
       o.agit = true; Sound.scream(0.8); shake(10, 700); flash('140,0,0', 0.8);
-      hurt(11, 'มือพวกนั้นจำหน้าเธอได้!');
+      hurt(11, 'มือพวกนั้นจำหน้าฉันได้!');
       await say('', 'แขนนับสิบบนต้นไม้ตวัดลงมาตะครุบข้อมือฉัน เล็บจิกลงไปในเนื้อ บัวรดน้ำหลุดมือ น้ำหกเรี่ยราด');
       o.agit = false;
       this.st.pours = 0; this.st.seq = 0;
@@ -1173,8 +1199,8 @@ const CH7 = {
       await chapterCard(this.num, this.title, this.en, this.when);
       await fade(0, 1500);
       await say('', 'ห้องเก็บของใต้บันได พื้นปูนมีคราบดำหนืดเป็นทางยาว เหยียบแล้วรองเท้าติดหนึบ');
-      await thought('กฎข้อ 1 — ดูแลทำความสะอาดบ้านให้เรียบร้อย');
-      setObjective('หาไม้ม็อบ แล้วเช็ดคราบให้หมด');
+      if (EASY()) await thought('กฎข้อ 1 — ดูแลทำความสะอาดบ้านให้เรียบร้อย');
+      setObjective(ez('หาไม้ม็อบ แล้วเช็ดคราบให้หมด', 'สำรวจห้องเก็บของ'));
     });
   },
   key: (x, y) => x + ',' + y,
@@ -1226,12 +1252,12 @@ const CH7 = {
   async takeMop(o) {
     if (G.flags.mop) { await say('', 'ที่แขวนว่างเปล่า'); return; }
     await say('', 'ไม้ม็อบแขวนอยู่บนผนัง ผ้าม็อบแข็งกรังเป็นแท่ง');
-    addItem('mop', 'ไม้ม็อบ', `เช็ดได้ ${MOP_CAP} ช่องแล้วต้องบิดที่ถัง`);
+    addItem('mop', 'ไม้ม็อบ', `เช็ดได้ ${MOP_CAP} ช่อง จากนั้นต้องไปบิดที่ถัง`);
     G.flags.mop = true; o.hidden = true;
     Sound.stinger(); G.fx.red = 0.25; setTimeout(() => G.fx.red = 0, 600);
     await say('', 'ทันทีที่จับด้ามม็อบ คราบดำบนพื้นก็ค่อยๆ เปลี่ยนสี... กลายเป็นรอยเลือดสด เป็นทางยาวเหมือนมีใครถูกลากไปตามพื้น');
-    await thought('ต้องเดินเช็ดไปตามรอยเลือด ให้หมดทุกช่อง');
-    setObjective(`เช็ดรอยเลือดให้หมด (0/${TRAIL.length}) — ม็อบเต็มให้ไปบิดที่ถัง`);
+    if (EASY()) await thought('ต้องเดินเช็ดไปตามรอยเลือด ให้หมดทุกช่อง');
+    setObjective(`เช็ดรอยเลือดให้หมด (0/${TRAIL.length}) — ม็อบเต็มแล้วให้ไปบิดที่ถัง`);
   },
   step(x, y) {
     const st = this.st;
@@ -1297,7 +1323,7 @@ const CH7 = {
         <text x="122" y="70" fill="#d55" font-size="8">โค้งที่สาม · 14:17</text>
         <path d="M150 100 L185 100 M178 94 L186 100 L178 106" stroke="#c22" stroke-width="2" fill="none"/>
         <text x="120" y="120" fill="#cbb" font-size="8">→ ประตูหน้าบ้าน</text>
-      </svg><div class="hint">[E] ปิด</div></div>`);
+      </svg><div class="hint">แตะหรือกด E เพื่อปิด</div></div>`);
     await thought('ถนนสายเก่า โค้งที่สาม... ทุกเส้นชี้ไปที่ประตูหน้าบ้าน');
     revealRule(1);
     G.flags.storageDone = true;
@@ -1334,7 +1360,7 @@ const CH8 = {
       await say('', 'ตูม! ตูม! ตูม! เสียงทุบประตูหน้าบ้านดังสนั่นจนฝุ่นร่วงจากเพดาน');
       await say('เสียงจากนอกบ้าน', 'ปฐพี! ปฐพีเปิดประตู! นายต้องออกมาจากที่นั่นเดี๋ยวนี้!');
       await thought('เสียงนั่น... ภูมิ เพื่อนสนิทฉัน');
-      await thought('แต่กฎข้อ 8 — ห้ามออกจากบ้านหลังเที่ยงคืน ไม่ว่าใครจะเรียก');
+      if (EASY()) await thought('แต่กฎข้อ 8 — ห้ามออกจากบ้านหลังเที่ยงคืน ไม่ว่าใครจะเรียก');
       setObjective('ตัดสินใจเรื่องประตูหน้าบ้าน');
     });
   },
@@ -1405,7 +1431,7 @@ const CH8 = {
           await thought('ข้างซ้าย... จริงเหรอ ทำไมฉันรู้สึกเหมือนแผลมันอยู่อีกข้าง');
         }
       } else if (k === 'open') {
-        const sure = await choose([{ text: 'เปิดเลย', danger: true }, 'เดี๋ยวก่อน'], { prompt: 'เปิดประตูหน้าบ้านหลังเที่ยงคืน? (ละเมิดกฎข้อ 8)' });
+        const sure = await choose([{ text: 'เปิดเลย', danger: true }, 'เดี๋ยวก่อน'], { prompt: ez('เปิดประตูหน้าบ้านหลังเที่ยงคืน? (ละเมิดกฎข้อ 8)', 'เปิดประตูหน้าบ้าน?') });
         if (sure !== 0) continue;
         this.ended = true;
         await this.opened();
@@ -1425,7 +1451,7 @@ const CH8 = {
     await say('???', 'ขอบใจที่เปิดให้นะ ปฐพี', { speed: 50 });
     flash('0,0,0', 1);
     G.fx.red = 0;
-    window.gameOver('เงามืดฉีกร่างเธอออกเป็นชิ้นๆ ...ไม่มีใครอยู่หลังประตูนั้นตั้งแต่แรก มีแค่ความหิวโหยที่เลียนเสียงคนที่เธอไว้ใจ', 'เพื่อนที่ไม่มีอยู่จริง');
+    window.gameOver('เงามืดฉีกร่างของปฐพีออกเป็นชิ้นๆ... ไม่เคยมีใครอยู่หลังประตูบานนั้น มีแค่ความหิวโหยที่เลียนเสียงคนที่เขาไว้ใจ', 'เพื่อนที่ไม่มีอยู่จริง');
   },
   async stayed() {
     const p = G.player;
@@ -1445,7 +1471,7 @@ const CH8 = {
     Sound.chain(); await wait(300); Sound.bang(); shake(10, 600);
     await say('', 'แกร๊ง!! เสียงโซ่ขาดดังมาจากห้องใต้ดิน');
     revealRule(8);
-    await thought('ห้องใต้ดิน... กฎข้อ 9');
+    await thought(ez('ห้องใต้ดิน... กฎข้อ 9', 'ห้องใต้ดิน...'));
     await nextChapter();
   },
 };
@@ -1512,13 +1538,13 @@ const CH9 = {
   async envelope(o) {
     if (G.flags.envOpen) return;
     await say('', 'ซองจดหมายสีน้ำตาลวางอยู่บนพื้น ไม่มีชื่อผู้ส่ง ไม่มีชื่อผู้รับ มีของแข็งๆ อยู่ข้างใน');
-    await thought('กฎข้อ 7 — อย่าเปิดซองจดหมายที่ไม่มีชื่อผู้รับ');
-    const c = await choose([{ text: 'เปิดซอง (ละเมิดกฎข้อ 7)', danger: true }, 'ปล่อยไว้']);
+    if (EASY()) await thought('กฎข้อ 7 — อย่าเปิดซองจดหมายที่ไม่มีชื่อผู้รับ');
+    const c = await choose([{ text: ez('เปิดซอง (ละเมิดกฎข้อ 7)', 'เปิดซอง'), danger: true }, 'ปล่อยไว้']);
     if (c !== 0) { await thought('ถ้าไม่เปิด... ฉันก็ไม่ต้องรู้'); return; }
     G.flags.envOpen = true; G.broken[7] = true; o.hidden = true;
     Sound.stinger(); G.fx.glitch = 0.8;
     await say('', 'ฉันฉีกซองออก... สิ่งแรกที่หล่นลงบนพื้นคือกุญแจรถยนต์ที่บิดเบี้ยวผิดรูป');
-    addItem('carkey', 'กุญแจรถที่บิดเบี้ยว', 'กุญแจรถของฉัน... พวงกุญแจเป็นตุ๊กตาหมีที่มิ้นให้');
+    addItem('carkey', 'กุญแจรถที่บิดเบี้ยว', 'กุญแจรถของฉัน... ห้อยตุ๊กตาหมีตัวเล็กที่มิ้นให้');
     await say('', 'ตามด้วยกระดาษพับครึ่งอีกแผ่นหนึ่ง');
     hurt(6);
     await readNote('รายงานการชันสูตรพลิกศพ (ฉบับย่อ)', `ผู้ตาย: <b>หญิง อายุ 26 ปี</b> — <span class="blood">ชื่อ: มิ้น ██████</span>
@@ -1552,7 +1578,7 @@ const CH9 = {
   },
   async goUp() {
     if (!G.flags.envOpen) { await say('', 'บันไดขึ้นไปชั้นบน ห้องนอนอุ่นๆ รออยู่ข้างบน... แต่ตอนนี้ฉันยังไม่อยากขึ้นไป'); return; }
-    const c = await choose([{ text: 'ขึ้นไปข้างบน — นอนให้ครบเจ็ดวัน', danger: true }, 'ยังก่อน'], { prompt: 'ทางเลือกนี้ย้อนกลับไม่ได้' });
+    const c = await choose([{ text: 'ขึ้นไปข้างบน — นอนให้ครบเจ็ดวัน', danger: true }, 'ยังก่อน'], { prompt: 'ถ้าเลือกทางนี้ จะย้อนกลับไม่ได้อีก' });
     if (c !== 0) return;
     await say('', 'ฉันหันหลังให้ประตูห้องใต้ดิน... แล้วก้าวขึ้นบันไดทีละขั้น');
     await say('ทนาย', 'ฉลาดมากครับ', { cls: 'lawyer' });
@@ -1562,12 +1588,12 @@ const CH9 = {
   async bdoor(o) {
     if (!G.flags.envOpen) {
       await say('', 'ประตูห้องใต้ดินแง้มอยู่ แต่ยังมีแม่กุญแจรูปร่างประหลาดล็อกไว้ — รูกุญแจเป็นรูปกุญแจรถยนต์');
-      await thought('กฎข้อ 9 — ห้ามลงไปที่ห้องใต้ดินเด็ดขาด');
+      if (EASY()) await thought('กฎข้อ 9 — ห้ามลงไปที่ห้องใต้ดินเด็ดขาด');
       return;
     }
     await say('', 'ฉันเสียบกุญแจรถที่บิดเบี้ยวลงในแม่กุญแจ... มันหมุนได้ เหมือนสตาร์ทรถ');
     Sound.engine(); await wait(600); Sound.unlock();
-    const c = await choose([{ text: 'ลงไปในความมืด (ละเมิดกฎข้อ 9)', danger: true }, 'ยังก่อน']);
+    const c = await choose([{ text: ez('ลงไปในความมืด (ละเมิดกฎข้อ 9)', 'ลงไปในความมืด'), danger: true }, 'ยังก่อน']);
     if (c !== 0) return;
     G.broken[9] = true;
     Sound.door();
@@ -1646,7 +1672,7 @@ const CH9 = {
     if (Math.abs(e.x - p.fx) < 0.6 && Math.abs(e.y - p.fy) < 0.6) {
       s.caught++;
       run(async () => {
-        Sound.scream(1); hurt(16, 'มันกอดเธอไว้แน่น...'); G.fx.glitch = 1;
+        Sound.scream(1); hurt(16, 'มันรัดตัวฉันไว้แน่น...'); G.fx.glitch = 1;
         await say('เงาของปฐพี', s.caught > 1 ? 'กลับขึ้นไป... ทำไมไม่ยอมเข้าใจ' : 'จะลงไปทำไม... ข้างล่างนั่นมีแต่ความเจ็บปวด', { cls: 'shadow' });
         await fade(1, 400);
         const pl = G.player; pl.x = pl.tx = 1; pl.y = pl.ty = 2; pl.fx = 1; pl.fy = 2; pl.moving = false; pl.dir = 'down';

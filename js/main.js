@@ -12,13 +12,13 @@ const store = {
 
 function snapshot() {
   return {
-    chapter: G.chapter, sanity: G.sanity,
+    chapter: G.chapter, sanity: G.sanity, mode: G.mode,
     inv: G.inv.map(i => Object.assign({}, i)), flags: JSON.parse(JSON.stringify(G.flags)),
     memories: G.memories.slice(), notes: Object.assign({}, G.notes), broken: Object.assign({}, G.broken),
   };
 }
 function restore(s) {
-  G.chapter = s.chapter; G.sanity = s.sanity;
+  G.chapter = s.chapter; G.sanity = s.sanity; G.mode = s.mode || 'easy';
   G.inv = s.inv.map(i => Object.assign({}, i)); G.flags = JSON.parse(JSON.stringify(s.flags));
   G.memories = s.memories.slice(); G.notes = Object.assign({}, s.notes); G.broken = Object.assign({}, s.broken || {});
 }
@@ -56,7 +56,8 @@ async function nextChapter() {
   startChapter(G.chapter + 1);
 }
 
-function newGame() {
+function newGame(mode) {
+  if (mode) G.mode = mode;
   G.inv = []; G.flags = {}; G.memories = []; G.notes = {}; G.broken = {}; G.sanity = 100;
   startChapter(1, { keepSanity: true });
 }
@@ -122,12 +123,21 @@ function showTitle() {
   const save = store.get(SAVE_KEY);
   const ends = store.get(END_KEY) || [];
   const items = [];
-  if (save && save.chapter > 1) items.push([`เล่นต่อ — บทที่ ${save.chapter}`, () => { Sound.init(); continueGame(); }]);
-  items.push(['เริ่มเกมใหม่', () => { Sound.init(); if (save) store.del(SAVE_KEY); newGame(); }]);
-  if (ends.length) items.push(['เลือกบท', () => chapterSelect()]);
+  if (save && save.chapter > 1) items.push([`เล่นต่อ — บทที่ ${save.chapter} (${MODE_NAME[save.mode || 'easy']})`, () => { Sound.init(); continueGame(); }]);
+  items.push(['เริ่มเกมใหม่', () => { Sound.init(); pickMode(m => { if (save) store.del(SAVE_KEY); newGame(m); }); }]);
+  if (ends.length) items.push(['เลือกบท', () => pickMode(m => { G.mode = m; chapterSelect(); })]);
   items.push([`เสียง: ${Sound.isEnabled() ? 'เปิด' : 'ปิด'}`, () => { Sound.setEnabled(!Sound.isEnabled()); showTitle(); }]);
   if (ends.length) items.push([`ตอนจบที่พบแล้ว: ${ends.map(e => e === 'true' ? 'Acceptance' : 'Denial').join(' · ')}`, () => showTitle()]);
   menuList($('#title-menu'), items);
+}
+const MODE_NAME = { easy: 'ง่าย', hard: 'ยาก' };
+function pickMode(cb) {
+  const t = $('#title-menu');
+  menuList(t, [
+    ['ง่าย — บอกกฎที่ต้องระวังก่อนเริ่มแต่ละบท', () => cb('easy')],
+    ['ยาก — ไม่บอกกฎ ต้องจำหรือเปิดสมุดทบทวนเอง', () => cb('hard')],
+    ['← กลับ', () => showTitle()],
+  ], { onCancel: showTitle });
 }
 function chapterSelect() {
   const t = $('#title-menu');
@@ -156,6 +166,7 @@ function openPause() {
     ['กลับไปเล่น', close],
     ['สมุดกฎ / ของ / ความทรงจำ', () => { close(); openJournal('rules'); }],
     [`เสียง: ${Sound.isEnabled() ? 'เปิด' : 'ปิด'}`, () => { Sound.setEnabled(!Sound.isEnabled()); close(); openPause(); }],
+    [`ระดับความยาก: ${MODE_NAME[G.mode]} (แตะเพื่อสลับ)`, () => { G.mode = G.mode === 'hard' ? 'easy' : 'hard'; if (G.checkpoint) { G.checkpoint.mode = G.mode; store.set(SAVE_KEY, G.checkpoint); } close(); openPause(); }],
     ['เริ่มบทนี้ใหม่', () => { close(); restore(G.checkpoint); startChapter(G.checkpoint.chapter, { keepSanity: true }); }],
     ['กลับหน้าหลัก', () => { close(); showTitle(); }],
   ], { onCancel: close });
@@ -171,7 +182,7 @@ function openJournal(tab = 'rules') {
   const tabs = ['rules', 'items', 'mem'];
   let ti = Math.max(0, tabs.indexOf(tab)), sel = 0;
   const panel = document.createElement('div'); panel.className = 'panel journal';
-  panel.innerHTML = `<div class="j-tabs"><div class="j-tab" data-t="0">กฎ ๙ ข้อ</div><div class="j-tab" data-t="1">ของที่ถือ</div><div class="j-tab" data-t="2">ความทรงจำ</div></div><div class="j-body"></div><div class="hint">← → เปลี่ยนหน้า · ↑ ↓ เลือก · E อ่าน · X / J ปิด</div>`;
+  panel.innerHTML = `<div class="j-tabs"><div class="j-tab" data-t="0">กฎ ๙ ข้อ</div><div class="j-tab" data-t="1">ของที่ถือ</div><div class="j-tab" data-t="2">ความทรงจำ</div><div class="j-tab j-close">✕ ปิด</div></div><div class="j-body"></div><div class="hint kbd">← → เปลี่ยนหน้า · ↑ ↓ เลือก · E อ่าน · X / J ปิด</div>`;
   const body = panel.querySelector('.j-body');
   function draw() {
     panel.querySelectorAll('.j-tab').forEach((t, i) => t.classList.toggle('sel', i === ti));
@@ -181,7 +192,7 @@ function openJournal(tab = 'rules') {
     } else if (ti === 1) {
       if (!G.inv.length) { body.innerHTML = '<div class="item-row">— ไม่มีอะไรติดตัว —</div>'; return; }
       sel = clamp(sel, 0, G.inv.length - 1);
-      body.innerHTML = G.inv.map((it, i) => `<div class="item-row" style="${i === sel ? 'background:rgba(120,20,20,.3)' : ''}" data-i="${i}"><b>${it.name}</b>${READABLE[it.id] ? ' <span style="display:inline;color:#c66">[E] อ่าน</span>' : ''}<span>${it.desc || ''}</span></div>`).join('');
+      body.innerHTML = G.inv.map((it, i) => `<div class="item-row" style="${i === sel ? 'background:rgba(120,20,20,.3)' : ''}" data-i="${i}"><b>${it.name}</b>${READABLE[it.id] ? ` <span style="display:inline;color:#c66">${IS_TOUCH ? '(แตะเพื่ออ่าน)' : '[E] อ่าน'}</span>` : ''}<span>${it.desc || ''}</span></div>`).join('');
       body.querySelectorAll('.item-row').forEach(r => r.onclick = () => { sel = +r.dataset.i; read(); });
     } else {
       body.innerHTML = MEMS.map((m, i) => G.memories.includes(i + 1) ? `<div class="mem-row">${i + 1}. ${m.mem}</div>` : `<div class="mem-row lock">${i + 1}. ░░░░░░░░ (ยังหาไม่พบ)</div>`).join('') +
@@ -204,6 +215,7 @@ function openJournal(tab = 'rules') {
     }, closeOnClick: () => h.close()
   });
   panel.querySelectorAll('.j-tab').forEach(t => t.onclick = e => { e.stopPropagation(); ti = +t.dataset.t; draw(); });
+  panel.querySelector('.j-close').onclick = e => { e.stopPropagation(); h.close(); };
   draw();
 }
 window.openJournal = openJournal;
@@ -342,6 +354,7 @@ function endScreen(kind) {
     cr.innerHTML = `
       <div class="end-tag">${label}</div>
       <div style="margin-top:calc(var(--u)*16);font-style:italic;color:#b9a99a">${epi}</div>
+      <div class="k">ระดับความยาก</div><div>${MODE_NAME[G.mode]}</div>
       <div class="k">เศษความทรงจำที่พบ</div><div>${G.memories.length} / 8</div>
       ${kind === 'true' && G.memories.length >= 8 ? '<div style="color:#e9a">— มิ้นตอบตกลง —</div>' : ''}
       <h3 class="big">แดนชำระ</h3><div>กฎ ๙ ข้อของบ้านมรดก</div>
@@ -392,6 +405,7 @@ function retryCh9() {
 (function boot() {
   const q = new URLSearchParams(location.search);
   const ch = +q.get('ch');
+  if (q.get('mode') === 'hard') G.mode = 'hard';
   if (ch >= 1 && ch <= 10) {
     $('#title-screen').hidden = true;
     G.inv = []; G.flags = {}; G.memories = []; G.notes = {}; G.broken = {}; G.sanity = 100;
