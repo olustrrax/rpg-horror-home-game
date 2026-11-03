@@ -10,7 +10,10 @@ const Sound = (() => {
   let heartTimer = null, heartBpm = 0, heartVol = 0.5;
 
   function init() {
-    if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+    // Safari 16.4+: play even when the iPhone silent switch is on
+    try { if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; } catch (e) { }
+    // iOS can leave the context 'interrupted' after switching apps or a phone call
+    if (ac) { if (ac.state !== 'running' && ac.state !== 'closed') ac.resume(); return; }
     try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
     master = ac.createGain(); master.gain.value = enabled ? vol : 0;
     const comp = ac.createDynamicsCompressor();
@@ -204,5 +207,6 @@ const Sound = (() => {
   function setEnabled(on) { enabled = on; if (master) master.gain.value = on ? vol : 0; }
   function isEnabled() { return enabled; }
 
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && ac && ac.state !== 'running' && ac.state !== 'closed') ac.resume().catch(() => { }); });
   return Object.assign({ init, ambient, stopAmbient, heart, setHeartVol, setEnabled, isEnabled }, S);
 })();

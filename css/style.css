@@ -8,6 +8,7 @@
 }
 
 * { box-sizing: border-box; }
+button, #touch, #stage { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 html, body {
   margin: 0; height: 100%; background: #000; color: var(--bone);
   font-family: 'Sarabun', 'Tahoma', 'Leelawadee UI', sans-serif;
@@ -174,7 +175,7 @@ html, body {
 
 /* ---------- Touch ---------- */
 #touch { display: none; position: absolute; inset: 0; pointer-events: none; }
-@media (pointer: coarse) { #touch { display: block; } #hud-keys { display: none; } }
+.touch #touch { display: block; } .touch #hud-keys { display: none; }
 #touch button { pointer-events: auto; background: rgba(40, 10, 12, .35); border: 1px solid rgba(160, 60, 60, .35); color: rgba(255, 220, 210, .6); font-family: inherit; border-radius: 50%; touch-action: none; }
 #touch .dpad { position: absolute; left: 3%; bottom: 6%; width: calc(var(--u) * 110); height: calc(var(--u) * 110); }
 #touch .dpad button { position: absolute; width: 36%; height: 36%; font-size: calc(var(--u) * 12); border-radius: 22%; }
@@ -185,4 +186,23 @@ html, body {
 #touch .small { width: calc(var(--u) * 36); height: calc(var(--u) * 36); font-size: calc(var(--u) * 8); }
 #touch button.on { background: rgba(140, 30, 30, .6); }
 /* hide the d-pad while dialogue is on screen (it overlaps the text on phones) */
-#stage:has(#dialog:not([hidden])) #touch .dpad { opacity: 0; pointer-events: none; }
+#stage.ui-dialog #touch .dpad { opacity: 0; pointer-events: none; }
+.touch .hint.kbd { display: none; }
+.j-tabs .j-close { margin-left: auto; color: #e6c9b0; }
+/* panels have their own buttons: hide touch controls so they never cover them */
+#stage.ui-modal #touch { display: none !important; }
+html, body { touch-action: manipulation; overscroll-behavior: none; }
+#rotate { display: none; position: fixed; inset: 0; z-index: 50; background: #000; color: #d9c2ad; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 18px; line-height: 1.6; padding: 24px; }
+#rotate span { font-size: 13px; color: #7a6a5e; }
+#rotate .rot-icon { font-size: 54px; color: #a33; animation: rot 2s ease-in-out infinite; }
+@keyframes rot { 0%, 30% { transform: rotate(0) } 60%, 100% { transform: rotate(90deg) } }
+/* phones held upright: ask to rotate (tablets in portrait are wide enough to play) */
+@media (orientation: portrait) and (max-width: 600px) { .touch #rotate { display: flex; } }
+.rules-card { min-width: 52%; max-width: 76%; }
+.rules-card .rule { font-size: calc(var(--u) * 12); padding: calc(var(--u) * 5) 0; }
+.rules-card .rc-tip { margin-top: calc(var(--u) * 10); font-size: calc(var(--u) * 11); color: #e2a59a; line-height: 1.5; }
+/* panels (rule card, notes, puzzles) must sit above the chapter title card and fade overlay */
+#modal { z-index: 6; }
+/* touch controls are only needed in-game; keyboard help is only useful with a keyboard */
+#stage.ui-menu #touch { display: none !important; }
+.touch .t-controls { display: none; }
