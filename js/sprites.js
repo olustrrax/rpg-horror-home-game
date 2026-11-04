@@ -359,3 +359,44 @@ SPR.bloodTrail = (c, x, y) => { };
 SPR.vase = (c, x, y) => { shadowAt(c, x, y, 7); R(c, x + 11, y + 10, 10, 16, '#3a2a3a'); R(c, x + 13, y + 6, 6, 5, '#3a2a3a'); for (let i = 0; i < 4; i++) R(c, x + 10 + i * 4, y - 6 + (i % 2) * 3, 2, 12, '#2a2a1a'); };
 SPR.radio = (c, x, y) => { R(c, x + 8, y + 10, 18, 12, '#3a2a1a'); oval(c, x + 13, y + 16, 3, 3, '#111'); R(c, x + 18, y + 13, 6, 2, '#a96'); };
 SPR.car = SPR.carWreck;
+
+/* ---------- special stage: morgue ---------- */
+SPR.nurse = (c, x, y, o, t) => {
+  const j = o.alert ? Math.round((Math.random() - 0.5) * 2) : 0;
+  const pal = { skin: '#cfc6bd', hair: '#0a0808', shirt: '#d9d4cc', pants: '#d9d4cc', shoe: '#e8e4dc', dress: true };
+  shadowAt(c, x, y);
+  human(c, x + j, y, o.dir || 'down', o.moving ? Math.floor(t * 7) % 4 : 0, pal, { noShadow: true, noHead: true });
+  // blank face, head tilted
+  const tilt = o.alert ? 3 : 1;
+  R(c, x + 10 + j + tilt, y - 4, 12, 12, pal.skin);
+  R(c, x + 9 + j + tilt, y - 6, 14, 4, pal.hair); R(c, x + 12 + j + tilt, y - 9, 8, 4, pal.hair);
+  R(c, x + 13 + j + tilt, y - 8, 6, 2, '#f2efe8'); R(c, x + 15 + j + tilt, y - 8, 2, 2, '#a01818');
+  R(c, x + 12, y + 12, 8, 2, '#7a1010');
+  // lamp
+  const lx = o.dir === 'left' ? x + 2 : x + 24;
+  R(c, lx, y + 12, 6, 7, '#3a3226'); R(c, lx + 1, y + 13, 4, 4, o.dark ? '#221' : '#ffd890');
+};
+SPR.morgueDrawer = (c, x, y, o, t) => {
+  const wall = o.layer === 'wall';
+  const top = wall ? y + 2 : y - 8;
+  if (!wall) shadowAt(c, x, y, 13);
+  R(c, x + 2, top, 28, wall ? 26 : 34, '#5d6266');
+  R(c, x + 4, top + 2, 24, wall ? 22 : 30, o.open ? '#0b0c0d' : '#7c8287');
+  if (!o.open) {
+    R(c, x + 12, top + 9, 8, 3, '#2a2d30');
+    R(c, x + 7, top + 15, 7, 5, o.checked ? '#9a7a5a' : '#d8cfb8');
+  } else {
+    R(c, x + 8, top + 8, 16, 12, '#c9c2b8'); R(c, x + 10, top + 10, 4, 4, '#b8b0a6'); R(c, x + 18, top + 10, 4, 4, '#b8b0a6');
+  }
+};
+SPR.gurney = (c, x, y) => {
+  shadowAt(c, x, y, 14);
+  R(c, x + 2, y + 6, 28, 12, '#8a8f93'); R(c, x + 3, y + 4, 26, 6, '#cfc9bf');
+  R(c, x + 6, y + 4, 18, 5, '#b9b2a6'); R(c, x + 4, y + 18, 2, 10, '#555'); R(c, x + 26, y + 18, 2, 10, '#555');
+  c.fillStyle = 'rgba(110,0,0,.5)'; c.fillRect(x + 12, y + 8, 8, 3);
+};
+SPR.logDesk = (c, x, y) => {
+  shadowAt(c, x, y, 12);
+  R(c, x + 2, y + 2, 28, 18, '#3a2e24'); R(c, x + 2, y + 2, 28, 3, '#4a3c2e'); R(c, x + 4, y + 20, 3, 8, '#22190f'); R(c, x + 25, y + 20, 3, 8, '#22190f');
+  R(c, x + 9, y + 5, 14, 9, '#d8cfb8'); R(c, x + 15, y + 5, 1, 9, '#8a7a5a'); R(c, x + 10, y + 7, 4, 1, '#555'); R(c, x + 17, y + 8, 4, 1, '#555');
+};

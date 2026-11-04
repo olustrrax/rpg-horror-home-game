@@ -206,3 +206,8 @@ html, body { touch-action: manipulation; overscroll-behavior: none; }
 /* touch controls are only needed in-game; keyboard help is only useful with a keyboard */
 #stage.ui-menu #touch { display: none !important; }
 .touch .t-controls { display: none; }
+/* easy mode: rules shown on the chapter title card (auto-continues) */
+.cs-rules { margin-top: calc(var(--u) * 22); padding: calc(var(--u) * 10) calc(var(--u) * 16); border-top: 1px solid #3a1616; border-bottom: 1px solid #3a1616; max-width: 74%; font-size: calc(var(--u) * 11); color: #d8c6b4; line-height: 1.6; opacity: 0; animation: fin 1.2s 1.8s forwards; text-align: left; }
+.cs-rules-h { font-family: 'Taviraj', serif; color: #c84a40; letter-spacing: .15em; font-size: calc(var(--u) * 10); margin-bottom: calc(var(--u) * 4); text-align: center; }
+.cs-rules b { color: #f0dcc8; }
+.cs-tip { margin-top: calc(var(--u) * 6); color: #e2a59a; }

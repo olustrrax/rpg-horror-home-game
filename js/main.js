@@ -53,7 +53,9 @@ async function nextChapter() {
   const g = G.gen;
   await fade(1, 1300);
   if (g !== G.gen) return;
-  startChapter(G.chapter + 1);
+  // hard mode takes a detour through the special stage between chapters 7 and 8
+  const n = G.chapter;
+  startChapter(n === 7 && G.mode === 'hard' ? SPECIAL_CH : n === SPECIAL_CH ? 8 : n + 1);
 }
 
 function newGame(mode) {
@@ -123,7 +125,7 @@ function showTitle() {
   const save = store.get(SAVE_KEY);
   const ends = store.get(END_KEY) || [];
   const items = [];
-  if (save && save.chapter > 1) items.push([`เล่นต่อ — บทที่ ${save.chapter} (${MODE_NAME[save.mode || 'easy']})`, () => { Sound.init(); continueGame(); }]);
+  if (save && save.chapter > 1) items.push([`เล่นต่อ — ${save.chapter === SPECIAL_CH ? 'ด่านพิเศษ' : 'บทที่ ' + save.chapter} (${MODE_NAME[save.mode || 'easy']})`, () => { Sound.init(); continueGame(); }]);
   items.push(['เริ่มเกมใหม่', () => { Sound.init(); pickMode(m => { if (save) store.del(SAVE_KEY); newGame(m); }); }]);
   if (ends.length) items.push(['เลือกบท', () => pickMode(m => { G.mode = m; chapterSelect(); })]);
   items.push([`เสียง: ${Sound.isEnabled() ? 'เปิด' : 'ปิด'}`, () => { Sound.setEnabled(!Sound.isEnabled()); showTitle(); }]);
@@ -141,7 +143,7 @@ function pickMode(cb) {
 }
 function chapterSelect() {
   const t = $('#title-menu');
-  const items = CHAPTERS.slice(1).map((c, i) => [`${i + 1}. ${c.title}`, () => {
+  const items = CHAPTERS.slice(1).filter((c, i) => i + 1 !== SPECIAL_CH || G.mode === 'hard').map((c, i) => [i + 1 === SPECIAL_CH ? `ด่านพิเศษ. ${c.title}` : `${i + 1}. ${c.title}`, () => {
     G.inv = []; G.flags = {}; G.memories = []; G.notes = {}; G.broken = {}; G.sanity = 100;
     // give sensible items for skipped chapters
     const n = i + 1;
@@ -174,6 +176,7 @@ function openPause() {
 window.openPause = openPause;
 
 const READABLE = {
+  band: () => readNote('ป้ายข้อมือโรงพยาบาล', `ผู้ป่วย: <b>ไม่ทราบชื่อ (หญิง)</b>\nอายุโดยประมาณ: 25–30 ปี\nนำส่งโดย: กู้ภัย — อุบัติเหตุรถยนต์พลิกคว่ำ ถนนสายเก่า กม. 14\n\n<span class="blood">สถานะ: เสียชีวิตในที่เกิดเหตุ</span>`),
   recipe: () => CH2.readRecipe(),
   schedule: () => CH5.readSchedule(),
   card: () => showHTML(`<div class="bizcard"><div class="bc-role">ทนายความ · ผู้จัดการมรดก</div><div class="bc-name">นาย ████ ███████</div><div class="bc-line">ติดต่อ: บ้านเลขที่ ๗ ซอยไม่มีชื่อ<br>เวลาทำการ: หลังเที่ยงคืน — ก่อนรุ่งสาง</div><div class="bc-stamp">รับรอง<br>๗ วัน</div><div class="bc-brand">Thorani Techno<br>https://thorani.co/</div></div>`),
@@ -406,13 +409,14 @@ function retryCh9() {
   const q = new URLSearchParams(location.search);
   const ch = +q.get('ch');
   if (q.get('mode') === 'hard') G.mode = 'hard';
-  if (ch >= 1 && ch <= 10) {
+  if (ch >= 1 && ch <= 11) {
     $('#title-screen').hidden = true;
     G.inv = []; G.flags = {}; G.memories = []; G.notes = {}; G.broken = {}; G.sanity = 100;
     if (ch >= 2) { addItem('rules', 'สมุดกฎ ๙ ข้อ', '', true); G.flags.shoes = true; }
     if (ch >= 3) addItem('recipe', 'การ์ดสูตรอาหาร', '', true);
     if (ch >= 4) addItem('hand', 'เข็มนาฬิกาสั้น', '', true);
     if (ch >= 5) { G.flags.sawWound = true; G.flags.woundVisible = true; }
+    if (ch >= 7) addItem('band', 'ป้ายข้อมือโรงพยาบาล', '"ผู้ป่วยไม่ทราบชื่อ (หญิง) — เสียชีวิตในที่เกิดเหตุ"', true);
     startChapter(ch, { keepSanity: true });
     return;
   }
