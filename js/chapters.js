@@ -51,13 +51,12 @@ const CH_RULES = {
   8: { rules: [8], tip: 'ถามคนหลังประตูก่อนตัดสินใจ — จำสิ่งที่เงาในกระจกเคยบอกไว้' },
   9: { rules: [7, 9], tip: 'ในบทนี้ การละเมิดกฎคือทางเดียวที่จะไปต่อ — ทางเลือกของคุณกำหนดตอนจบ' },
 };
-async function showChapterRules() {
+function chapterRulesHTML() {
   const d = CH_RULES[G.chapter];
-  if (!EASY() || !d) return;
-  await showHTML(`<div class="panel rules-card"><h2>กฎที่ต้องระวังในบทนี้</h2>
-    ${d.rules.map(n => `<div class="rule"><b>ข้อ ${n}.</b> ${RULES[n - 1]}</div>`).join('')}
-    <div class="rc-tip">◆ ${d.tip}</div>
-    <div class="hint">แตะหรือกด E เพื่อเริ่ม</div></div>`);
+  if (!EASY() || !d) return '';
+  return `<div class="cs-rules"><div class="cs-rules-h">กฎที่ต้องระวังในบทนี้</div>
+    ${d.rules.map(n => `<div><b>ข้อ ${n}.</b> ${RULES[n - 1]}</div>`).join('')}
+    <div class="cs-tip">◆ ${d.tip}</div></div>`;
 }
 
 function revealRule(n) { if (G.notes[n]) return; G.notes[n] = true; Sound.glitch(); G.fx.glitch = 0.4; toast(`สมุดกฎ: ข้อ ${n} ถูกเขียนทับด้วยหมึกแดง`, 'red', 2800); }
@@ -128,14 +127,17 @@ const CH1 = {
     run(async () => {
       fadeInstant(1);
       await chapterCard(this.num, this.title, this.en, this.when);
-      await wait(400);
-      await say('', '...ตี๊ด ...ตี๊ด ...ตี๊ด');
-      await fade(0, 2200);
-      await thought('ที่นี่... ที่ไหน');
-      await thought('หัวฉัน... ทำไมข้างขวามันชาไปหมด');
-      await say('', 'ห้องพักผู้ป่วยว่างเปล่า ไม่มีหมอ ไม่มีพยาบาล มีแค่เสียงเครื่องวัดชีพจรดังอยู่เครื่องเดียว');
+      // straight into the hospital: the opening lines play as subtitles, no button needed
+      subtitle('...ตี๊ด ...ตี๊ด ...ตี๊ด', 2200, 'whisper');
       setObjective('สำรวจห้องพักผู้ป่วย');
+      await fade(0, 1800);
     });
+    const g0 = G.gen;
+    const lines = [['ปฐพี: ที่นี่... ที่ไหน', 2400], ['ปฐพี: หัวฉัน... ทำไมข้างขวามันชาไปหมด', 2800], ['ห้องพักผู้ป่วยว่างเปล่า ไม่มีหมอ ไม่มีพยาบาล มีแค่เสียงเครื่องวัดชีพจรดังอยู่เครื่องเดียว', 3800]];
+    (async () => {
+      while (G.gen === g0 && (G.busy || Input.layers.length)) await new Promise(r => setTimeout(r, 120));
+      for (const [t, ms] of lines) { if (G.gen !== g0) return; subtitle(t, ms - 200); await new Promise(r => setTimeout(r, ms)); }
+    })();
   },
   hospital() {
     return {
@@ -208,7 +210,7 @@ const CH1 = {
     await wait(500);
     await thought('เดี๋ยวนะ... เมื่อกี้เขา... ไม่มีหัว');
     await thought('แล้วใต้เท้าเขา... ก็ไม่มีเงาเลยสักนิด');
-    setObjective('ออกจากห้องทางประตูด้านล่าง');
+    setObjective('ออกจากห้องทางประตูด้านล่าง'); setExit('door');
   },
   async hospitalDoor() {
     if (!hasItem('housekey')) { await lockedDoor('ประตูล็อก มีป้ายแขวนว่า "ห้ามผู้ป่วยออกนอกห้อง"'); return; }
@@ -274,7 +276,7 @@ const CH1 = {
     await wait(300);
     await say('เสียงทนาย', 'ยินดีต้อนรับกลับบ้านครับ คุณปฐพี... เดินตรงไปข้างหน้า อย่าเดินถอยหลังนะครับ', { cls: 'lawyer' });
     G.flags.noBack = true;
-    setObjective('เดินไปที่ประตูด้านใน — ห้ามเดินถอยหลัง');
+    setObjective('เดินไปที่ประตูด้านใน — ห้ามเดินถอยหลัง'); setExit('inner');
   },
   async backward() {
     if (G.flags.backCd && G.t < G.flags.backCd) return;
@@ -404,7 +406,7 @@ const CH2 = {
     await say('', 'มือเย็นเฉียบนับสิบโผล่ออกมาจากเบาะ รัดข้อมือฉันไว้แน่น!');
     let okk = false;
     for (let tries = 0; tries < 4 && !okk; tries++) {
-      okk = await qteMash('กด [E] รัวๆ เพื่อดิ้นให้หลุด!', 12, 4200);
+      okk = await qteMash('กด [E] รัวๆ เพื่อดิ้นให้หลุด!', ez(12, 18), ez(4200, 3600));
       if (!okk) { hurt(6, 'มันไม่ยอมปล่อย...'); Sound.scream(0.6); }
     }
     G.playerPose = null; o.hidden = false; o.spine = true;
@@ -436,7 +438,7 @@ const CH2 = {
     Sound.rumble(1.2);
     await say('', 'ทางเดินเงียบลงทันที แดดสีเลือดหรี่ลง... ประตูสุดทางดูใกล้เข้ามา');
     revealRule(2);
-    setObjective('ไปที่ประตูสุดทางเดิน');
+    setObjective('ไปที่ประตูสุดทางเดิน (ทางขวาสุด)'); setExit('end');
   },
   async readRecipe() {
     await readNote('การ์ดสูตรอาหาร — "ข้าวผัดของมิ้น"',
@@ -664,7 +666,7 @@ const CH3 = {
     revealRule(3);
     Sound.unlock();
     await say('', 'แกร๊ก... ประตูมุมห้องปลดล็อก');
-    setObjective('ออกจากห้องครัว');
+    setObjective('ออกจากห้องครัว (ประตูมุมขวาบน)'); setExit('exit');
   },
   async exit() {
     if (!G.flags.ate) { await lockedDoor('ประตูล็อกแน่น มีกระดาษติดไว้ว่า "กินให้หมดก่อน"'); return; }
@@ -748,10 +750,10 @@ const CH4 = {
   updateBeam(dt) {
     const b = this.beam; if (!G.running || G.flags.noonDone && G.flags.mirrorDone) { b.phase = 'off'; return; }
     b.t -= dt;
-    if (b.phase === 'off' && b.t <= 0) { b.phase = 'warn'; b.t = 1.1; Sound.engine(); }
+    if (b.phase === 'off' && b.t <= 0) { b.phase = 'warn'; b.t = ez(1.1, 0.75); Sound.engine(); }
     else if (b.phase === 'warn' && b.t <= 0) { b.phase = 'sweep'; b.dir = Math.random() < 0.5 ? 1 : -1; b.x = b.dir > 0 ? -1 : 16; b.t = 2.3; }
     else if (b.phase === 'sweep') {
-      b.x += b.dir * dt * 7.4;
+      b.x += b.dir * dt * ez(7.4, 10);
       const p = G.player;
       if (p && G.busy === 0 && !Input.layers.length && !this.hitCd) {
         const px = p.fx + 0.5;
@@ -760,7 +762,7 @@ const CH4 = {
           Sound.horn(); Sound.brake(); flash('255,250,220', 0.95); hurt(8, 'เบรก!!');
         }
       }
-      if (b.t <= 0) { b.phase = 'off'; b.t = 3.6 + Math.random() * 1.6; }
+      if (b.t <= 0) { b.phase = 'off'; b.t = ez(3.6 + Math.random() * 1.6, 2.0 + Math.random() * 1.2); }
     }
   },
   async clock(o) {
@@ -858,7 +860,7 @@ const CH4 = {
     addItem('studykey', 'กุญแจห้องทำงาน', 'กุญแจเปียกเลือด ยังอุ่นเหมือนเพิ่งหลุดออกมาจากในตัวใครสักคน');
     G.flags.mirrorDone = true;
     revealRule(5);
-    setObjective('ไปที่ห้องทำงาน (ประตูมุมขวาล่าง)');
+    setObjective('ไปที่ห้องทำงาน (ประตูมุมขวาล่าง)'); setExit('study');
   },
   async studyDoor() {
     if (!hasItem('studykey')) { await lockedDoor('ประตูห้องทำงานล็อกอยู่ รูกุญแจมีคราบเลือดแห้ง'); return; }
@@ -962,6 +964,7 @@ const CH5 = {
   movedDuringRing() {
     const s = this.st; s.moved = true;
     Sound.creak(); hurt(4);
+    if (!EASY()) { s.count = 0; setObjective(this.callObj(0)); }
     subtitle(ez('พื้นไม้ลั่นเอี๊ยด... "เธออยู่ตรงนั้นจริงๆ ด้วย" (สายนี้ไม่นับ)', 'พื้นไม้ลั่นเอี๊ยด... "เธออยู่ตรงนั้นจริงๆ ด้วย"'), 2600, 'whisper');
   },
   interceptOk() {
@@ -1024,7 +1027,7 @@ const CH5 = {
     await say('', 'นาฬิกาที่ไหนสักแห่งตีบอกเวลา... ตีสาม');
     Sound.unlock();
     await say('', 'แกร๊ก... ประตูมุมห้องที่ออกไปสวนหลังบ้านปลดล็อกแล้ว');
-    setObjective('ไปที่สวนหลังบ้าน (ประตูมุมขวาล่าง)');
+    setObjective('ไปที่สวนหลังบ้าน (ประตูมุมขวาล่าง)'); setExit('garden');
   },
   async readSchedule() {
     await readNote('ตารางรดน้ำ — ตีสามตรงเท่านั้น',
@@ -1108,10 +1111,23 @@ const CH6 = {
         const d = dist(p.x, p.y, 18, 10);
         Sound.setHeartVol(clamp(0.7 - d * 0.05, 0.08, 0.7));
         self.st.mt += dt;
-        if (self.st.mt > 35 && self.st.min < 4) { self.st.mt = 0; self.st.min++; setClock('03:0' + self.st.min); }
+        if (EASY()) { if (self.st.mt > 35 && self.st.min < 4) { self.st.mt = 0; self.st.min++; setClock('03:0' + self.st.min); } }
+        else if (!G.flags.band && self.st.seq < 3 && !G.busy && !Input.layers.length && self.st.mt > 24) {
+          self.st.mt = 0; self.st.min++; setClock('03:0' + self.st.min);
+          if (self.st.min === 4) subtitle('อีกนาทีเดียว... ตีสามกำลังจะผ่านไป', 2600, 'loud');
+          if (self.st.min >= 5) run(() => self.timeUp());
+        }
       },
       lights: () => [{ x: 4.5 * TILE, y: 2.2 * TILE, r: 80, a: 0.5 }, { x: 10.5 * TILE, y: 2.2 * TILE, r: 80, a: 0.5 }],
     };
+  },
+  async timeUp() {
+    Sound.scream(1); shake(12, 900); flash('140,0,0', 0.8);
+    hurt(14, 'ตีสามผ่านไปแล้ว!');
+    G.map.objs.forEach(t => { if (t.draw === 'armTree') { t.wet = false; t.agit = true; } });
+    await say('', 'แขนบนต้นไม้ทุกต้นกระตุกพร้อมกัน ดินแห้งผาก... เวลากลับไปเริ่มที่ตีสามอีกครั้ง');
+    G.map.objs.forEach(t => { if (t.draw === 'armTree') t.agit = false; });
+    this.st.seq = 0; this.st.pours = 0; this.st.min = 0; this.st.mt = 0; setClock('03:00');
   },
   async faucet() {
     if (!hasItem('can')) { await say('', 'ก๊อกน้ำสนิมเขรอะ มีของเหลวสีแดงหยดออกมาช้าๆ'); return; }
@@ -1172,7 +1188,7 @@ const CH6 = {
     G.flags.band = true;
     await thought('ไม่ทราบชื่อ...? ฉันรู้ชื่อเธอ... ฉันรู้ ทำไมฉันพูดออกมาไม่ได้');
     revealRule(4);
-    setObjective('กลับเข้าบ้าน (ประตูหลังบ้าน)');
+    setObjective('กลับเข้าบ้าน (ประตูหลังบ้าน ด้านบน)'); setExit('back');
   },
   async backDoor() {
     if (!G.flags.band) { await say('', 'ยังกลับเข้าไปไม่ได้... งานตอนตีสามยังไม่เสร็จ'); return; }
@@ -1192,7 +1208,7 @@ const CH7 = {
     setChapterLabel(`บทที่ 7 — ${this.title}`);
     setClock('09:00');
     Sound.ambient('storage');
-    this.st = { clean: new Set(), load: 0, crawl: null, crawlT: 0, stun: 0, fullWarn: 0, done: false };
+    this.st = { clean: new Set(), load: 0, crawl: null, crawls: [], fullWarn: 0, done: false };
     loadMap(this.map(), 14, 2, 'down');
     run(async () => {
       fadeInstant(1);
@@ -1252,53 +1268,62 @@ const CH7 = {
   async takeMop(o) {
     if (G.flags.mop) { await say('', 'ที่แขวนว่างเปล่า'); return; }
     await say('', 'ไม้ม็อบแขวนอยู่บนผนัง ผ้าม็อบแข็งกรังเป็นแท่ง');
-    addItem('mop', 'ไม้ม็อบ', `เช็ดได้ ${MOP_CAP} ช่อง จากนั้นต้องไปบิดที่ถัง`);
+    addItem('mop', 'ไม้ม็อบ', `เช็ดได้ ${this.cap()} ช่อง จากนั้นต้องไปบิดที่ถัง`);
     G.flags.mop = true; o.hidden = true;
     Sound.stinger(); G.fx.red = 0.25; setTimeout(() => G.fx.red = 0, 600);
     await say('', 'ทันทีที่จับด้ามม็อบ คราบดำบนพื้นก็ค่อยๆ เปลี่ยนสี... กลายเป็นรอยเลือดสด เป็นทางยาวเหมือนมีใครถูกลากไปตามพื้น');
     if (EASY()) await thought('ต้องเดินเช็ดไปตามรอยเลือด ให้หมดทุกช่อง');
     setObjective(`เช็ดรอยเลือดให้หมด (0/${TRAIL.length}) — ม็อบเต็มแล้วให้ไปบิดที่ถัง`);
   },
+  cap() { return ez(MOP_CAP, 5); },
   step(x, y) {
     const st = this.st;
     if (!G.flags.mop || st.done || !this.isTrail(x, y) || st.clean.has(this.key(x, y))) return;
-    if (st.load >= MOP_CAP) {
+    if (st.load >= this.cap()) {
       if (G.t > st.fullWarn) { st.fullWarn = G.t + 3; subtitle('ม็อบชุ่มเลือดจนหนักอึ้ง... ต้องไปบิดที่ถังก่อน', 2400); Sound.squish(); }
       return;
     }
     st.clean.add(this.key(x, y)); st.load++;
     Sound.squish();
-    setObjective(`เช็ดรอยเลือดให้หมด (${st.clean.size}/${TRAIL.length}) — ม็อบ ${st.load}/${MOP_CAP}`);
+    setObjective(`เช็ดรอยเลือดให้หมด (${st.clean.size}/${TRAIL.length}) — ม็อบ ${st.load}/${this.cap()}`);
     if (!st.crawl) this.spawnCrawler();
     if (st.clean.size === 10 && !G.flags.c7a) { G.flags.c7a = 1; subtitle('รอยที่เช็ดออก... เผยให้เห็นเส้นถนนอยู่ข้างใต้', 3000); }
     if (st.clean.size === TRAIL.length) run(() => this.finish());
   },
-  spawnCrawler() {
+  spawnCrawler(x = 16, y = 10, loud = true) {
     const st = this.st;
-    st.crawl = { x: 16, y: 10, draw: 'crawler', dir: 'left', alpha: 0 };
-    G.map.ents.push(st.crawl);
-    st.crawlT = 2.4;
+    const c = { x, y, hx: x, hy: y, draw: 'crawler', dir: 'left', alpha: 0, t: 2.4, stun: 0 };
+    st.crawls.push(c); st.crawl = st.crawls[0];
+    G.map.ents.push(c);
     Sound.gurgle(); Sound.stinger();
-    subtitle('มีบางอย่างคลานออกมาจากท่อระบาย...', 2800, 'loud');
+    if (loud) subtitle(st.crawls.length > 1 ? 'อีกตัวหนึ่ง... คลานออกมาจากมุมมืด' : 'มีบางอย่างคลานออกมาจากท่อระบาย...', 2800, 'loud');
   },
   update(dt) {
-    const st = this.st, c = st.crawl, p = G.player;
-    if (!c || st.done || !p) return;
-    if (c.alpha < 1) c.alpha = Math.min(1, c.alpha + dt * 0.8);
+    const st = this.st, p = G.player;
+    if (!st.crawls.length || st.done || !p) return;
+    st.crawls.forEach(c => { if (c.alpha < 1) c.alpha = Math.min(1, c.alpha + dt * 0.8); });
     if (G.busy || Input.layers.length) return;
-    if (st.stun > 0) { st.stun -= dt; return; }
-    st.crawlT -= dt;
-    const speed = 0.82 - st.clean.size / TRAIL.length * 0.35;
-    if (st.crawlT <= 0) {
-      st.crawlT = speed;
-      const nx = bfsStep(Math.round(c.x), Math.round(c.y), p.x, p.y, walkablePlain);
-      if (nx) { c.dir = nx[0] < c.x ? 'left' : 'right'; moveEnt(c, nx[0], nx[1], speed * 900); if (Math.random() < 0.3) Sound.squish(); }
+    // hard: extra crawlers join as the trail gets cleaner
+    if (!EASY()) {
+      if (st.clean.size >= 9 && st.crawls.length < 2) this.spawnCrawler(1, 10);
+      if (st.clean.size >= 19 && st.crawls.length < 3) this.spawnCrawler(16, 3);
     }
-    if (Math.abs(c.x - p.fx) < 0.55 && Math.abs(c.y - p.fy) < 0.55) {
-      hurt(14, 'มันคว้าข้อเท้า!');
-      Sound.scream(0.7);
-      st.stun = 2.2; c.x = 16; c.y = 10; c.alpha = 0;
-    }
+    const prog = st.clean.size / TRAIL.length;
+    const speed = ez(0.82 - prog * 0.35, 0.56 - prog * 0.24);
+    st.crawls.forEach(c => {
+      if (c.stun > 0) { c.stun -= dt; return; }
+      c.t -= dt;
+      if (c.t <= 0) {
+        c.t = speed;
+        const nx = bfsStep(Math.round(c.x), Math.round(c.y), p.x, p.y, walkablePlain);
+        if (nx) { c.dir = nx[0] < c.x ? 'left' : 'right'; moveEnt(c, nx[0], nx[1], speed * 900); if (Math.random() < 0.3) Sound.squish(); }
+      }
+      if (Math.abs(c.x - p.fx) < 0.55 && Math.abs(c.y - p.fy) < 0.55) {
+        hurt(14, 'มันคว้าข้อเท้า!');
+        Sound.scream(0.7);
+        c.stun = ez(2.2, 1.4); c.x = c.hx; c.y = c.hy; c.alpha = 0;
+      }
+    });
   },
   async bucket(o) {
     if (!G.flags.mop) { await say('', 'ถังน้ำสังกะสี มีน้ำใสอยู่ครึ่งถัง'); return; }
@@ -1306,13 +1331,13 @@ const CH7 = {
     Sound.splash();
     this.st.load = 0; o.full = true;
     toast('บิดม็อบแล้ว');
-    setObjective(`เช็ดรอยเลือดให้หมด (${this.st.clean.size}/${TRAIL.length}) — ม็อบ 0/${MOP_CAP}`);
+    setObjective(`เช็ดรอยเลือดให้หมด (${this.st.clean.size}/${TRAIL.length}) — ม็อบ 0/${this.cap()}`);
     if (!G.flags.bucketTxt) { G.flags.bucketTxt = 1; await say('', 'ฉันบิดม็อบลงถัง น้ำใสกลายเป็นสีแดงข้นในพริบตา มีเส้นผมลอยขึ้นมาเป็นกระจุก'); }
   },
   async finish() {
     const st = this.st; st.done = true;
-    if (st.crawl) { Sound.scream(1.2); shake(8, 700); for (let i = 0; i < 10; i++) { st.crawl.alpha = 1 - i / 10; await wait(60); } G.map.ents = G.map.ents.filter(e => e !== st.crawl); }
-    await say('', 'สิ่งที่คลานตามฉันมาไหลกลับลงท่อระบาย พร้อมเสียงครางยาว');
+    if (st.crawls.length) { Sound.scream(1.2); shake(8, 700); for (let i = 0; i < 10; i++) { st.crawls.forEach(c => c.alpha = 1 - i / 10); await wait(60); } G.map.ents = G.map.ents.filter(e => !st.crawls.includes(e)); }
+    await say('', ez('สิ่งที่คลานตามฉันมาไหลกลับลงท่อระบาย พร้อมเสียงครางยาว', 'สิ่งที่คลานตามฉันมาทั้งหมดไหลกลับลงท่อระบาย พร้อมเสียงครางยาว'));
     await say('', 'รอยเลือดหายไปหมดแล้ว... เหลือแต่ลายเส้นบนพื้นปูน มันคือแผนที่ถนน');
     await showHTML(`<div class="panel pz-center"><h2>แผนที่บนพื้นปูน</h2>
       <svg viewBox="0 0 200 130" style="width:calc(var(--u)*320);height:calc(var(--u)*208)">
@@ -1328,7 +1353,7 @@ const CH7 = {
     revealRule(1);
     G.flags.storageDone = true;
     Sound.unlock();
-    setObjective('ออกไปที่โถงหน้าบ้าน');
+    setObjective('ออกไปที่โถงหน้าบ้าน (ประตูมุมขวาล่าง)'); setExit('exit');
   },
   async drain() {
     if (!this.st.done) { await say('', 'ท่อระบายน้ำ มีเสียงหายใจครืดคราดดังขึ้นมาจากข้างใต้'); if (this.st.crawl) return; await say('', 'ฉันไม่กล้าล้วงมือลงไปตอนนี้'); return; }
@@ -1361,7 +1386,7 @@ const CH8 = {
       await say('เสียงจากนอกบ้าน', 'ปฐพี! ปฐพีเปิดประตู! นายต้องออกมาจากที่นั่นเดี๋ยวนี้!');
       await thought('เสียงนั่น... ภูมิ เพื่อนสนิทฉัน');
       if (EASY()) await thought('แต่กฎข้อ 8 — ห้ามออกจากบ้านหลังเที่ยงคืน ไม่ว่าใครจะเรียก');
-      setObjective('ตัดสินใจเรื่องประตูหน้าบ้าน');
+      setObjective('ตัดสินใจเรื่องประตูหน้าบ้าน'); setExit('front');
     });
   },
   map() {
@@ -1390,7 +1415,7 @@ const CH8 = {
   },
   async chainEvent() {
     Sound.chain(); shake(5, 400);
-    const ok = await qtePress('โซ่คล้องประตูกำลังหลุด! กด [E] ดันไว้!', 1900);
+    const ok = await qtePress('โซ่คล้องประตูกำลังหลุด! กด [E] ดันไว้!', ez(1900, 1300));
     if (ok) { Sound.knock(); await say('', 'ฉันดันประตูปิดไว้ได้ทัน โซ่กลับเข้าที่'); }
     else {
       Sound.scream(0.6); flash('0,0,0', 0.9); shake(10, 600);
@@ -1400,7 +1425,7 @@ const CH8 = {
   },
   async door() {
     while (!this.ended) {
-      if (Math.random() < 0.38) await this.chainEvent();
+      if (Math.random() < ez(0.38, 0.6)) await this.chainEvent();
       const opts = [];
       if (!this.asked.who) opts.push(['who', 'ภูมิ...? นั่นนายจริงๆ เหรอ']);
       if (!this.asked.what) opts.push(['what', 'เกิดอะไรขึ้นข้างนอก']);
@@ -1574,7 +1599,7 @@ const CH9 = {
       ['ทนาย', 'แล้วทุกอย่างจะเป็นของท่าน คฤหาสน์ เงินสามล้าน... และการไม่ต้องจำอะไรอีกเลยตลอดไป'],
       ['ทนาย', 'หรือท่านจะลงไปข้างล่าง... ที่ที่ไม่มีอะไรรออยู่ นอกจากความจริง'],
     ]);
-    setObjective('เลือก: ขึ้นบันไดไปข้างบน หรือ ลงไปห้องใต้ดิน');
+    setObjective('เลือก: ขึ้นบันไดไปข้างบน หรือ ลงไปห้องใต้ดิน'); setExit('bdoor');
   },
   async goUp() {
     if (!G.flags.envOpen) { await say('', 'บันไดขึ้นไปชั้นบน ห้องนอนอุ่นๆ รออยู่ข้างบน... แต่ตอนนี้ฉันยังไม่อยากขึ้นไป'); return; }
@@ -1645,7 +1670,7 @@ const CH9 = {
     const s = this.sh, p = G.player; if (!s || !p || G.flags.reachedCar) return;
     if (p.x >= 13 && p.y >= 10 && !G.flags.reachedCar) { G.flags.reachedCar = true; run(() => this.reachCar()); return; }
     if (!s.active) {
-      if (dist(p.x, p.y, 1, 2) > 5 && G.busy === 0) {
+      if (dist(p.x, p.y, 1, 2) > ez(5, 3) && G.busy === 0) {
         s.active = true;
         s.e = { x: 1, y: 1, draw: 'shadowSelf', alpha: 0 }; G.map.ents.push(s.e); s.t = 1.5;
         Sound.stinger(); subtitle('มีบางอย่างลงบันไดตามมา...', 2500, 'loud');
@@ -1660,9 +1685,9 @@ const CH9 = {
     const d = dist(e.x, e.y, p.fx, p.fy);
     Sound.setHeartVol(clamp(0.9 - d * 0.06, 0.15, 0.9));
     if (s.t <= 0) {
-      s.t = 0.43;
+      s.t = ez(0.43, 0.29);
       const n = bfsStep(Math.round(e.x), Math.round(e.y), p.x, p.y, walkablePlain, 1500);
-      if (n) moveEnt(e, n[0], n[1], 380);
+      if (n) moveEnt(e, n[0], n[1], ez(380, 250));
     }
     if (s.talk <= 0 && d < 7) {
       s.talk = 6;
@@ -1720,7 +1745,7 @@ const CH10 = {
       await thought('รถของฉัน...');
       const mint = { id: 'mintGhost', x: 21, y: 12, draw: 'mint', dir: 'left', alpha: 0.6, jitter: true };
       G.map.ents.push(mint);
-      setObjective('เข้าไปที่ซากรถ');
+      setObjective('เข้าไปที่ซากรถ'); setExit('car');
     });
   },
   async car(o) {
@@ -1769,4 +1794,198 @@ const CH10 = {
   },
 };
 
-const CHAPTERS = [null, CH1, CH2, CH3, CH4, CH5, CH6, CH7, CH8, CH9, CH10];
+
+/* =========================================================
+   SPECIAL STAGE (hard mode only) — The Cold Drawer
+   between chapter 7 and chapter 8
+   ========================================================= */
+const MORGUE_TAGS = {
+  A: { sex: 'ชาย', name: 'นายสมชาย ██████', from: 'บ้านพักคนชรา', how: 'หัวใจล้มเหลว' },
+  B: { sex: 'หญิง', name: 'ไม่ทราบชื่อ', from: 'ถนนสายเก่า กม. 41', how: 'เสียชีวิตในที่เกิดเหตุ' },
+  C: { sex: 'หญิง', name: 'นางสาวกานดา ██████', from: 'ถนนสายเก่า กม. 14', how: 'เสียชีวิตที่โรงพยาบาล' },
+  D: { sex: 'ชาย', name: 'ไม่ทราบชื่อ', from: 'แม่น้ำ', how: 'จมน้ำ' },
+  E: { sex: 'หญิง', name: 'ไม่ทราบชื่อ', from: 'ถนนสายใหม่ กม. 14', how: 'เสียชีวิตในที่เกิดเหตุ' },
+  F: { sex: 'ชาย', name: 'ไม่ทราบชื่อ', from: 'ถนนสายเก่า กม. 14', how: 'ยังไม่เสียชีวิต — "เตรียมไว้แล้ว"', self: true },
+  G: { sex: 'หญิง', name: 'ไม่ทราบชื่อ', from: 'ถนนสายเก่า กม. 14', how: 'เสียชีวิตที่โรงพยาบาล' },
+  H: { sex: 'ชาย', name: 'นายภูมิ ██████', from: 'ไม่ระบุ', how: '— ป้ายว่างเปล่า —' },
+  I: { sex: 'หญิง', name: 'เด็กหญิง ██████', from: 'อาคารถูกไฟไหม้', how: 'สำลักควัน' },
+  J: { sex: 'หญิง', name: 'ไม่ทราบชื่อ', from: 'ถนนสายเก่า กม. 14', how: 'เสียชีวิตในที่เกิดเหตุ', right: true },
+  L: { sex: 'หญิง', name: 'ไม่ทราบชื่อ', from: 'ถนนสายเก่า กม. 4', how: 'เสียชีวิตในที่เกิดเหตุ' },
+  M: { sex: 'ชาย', name: 'นายประเสริฐ ██████', from: 'โรงงาน', how: 'อุบัติเหตุ' },
+};
+const SP = {
+  num: 'ด่านพิเศษ', title: 'ลิ้นชักเย็นเฉียบ', en: 'The Cold Drawer', when: 'คืนที่ 6 · 23:40',
+  start() {
+    setChapterLabel(`ด่านพิเศษ — ${this.title}`);
+    setClock('23:40');
+    Sound.ambient('storage');
+    this.st = { wp: 1, t: 0, chaseT: 0, alert: false, rage: false, blackout: false, boT: 6, caught: 0 };
+    loadMap(this.map(), 2, 11, 'up');
+    const n = { id: 'nurse', x: 2, y: 4, draw: 'nurse', dir: 'right', solid: false };
+    G.map.ents.push(n); this.nurse = n;
+    run(async () => {
+      fadeInstant(1);
+      await chapterCard(this.num, this.title, this.en, this.when);
+      await fade(0, 1500);
+      await say('', 'ประตูห้องเก็บของไม่ได้พาฉันไปที่โถง... มันพามาที่ห้องเย็นเฉียบ กลิ่นฟอร์มาลีนแสบจมูก');
+      await say('', 'ผนังเต็มไปด้วยลิ้นชักเหล็กสำหรับเก็บศพ แต่ละช่องมีป้ายผูกไว้');
+      await say('', 'แก๊ก... แก๊ก... มีใครบางคนเดินอยู่ในความมืด ถือตะเกียงส่องไปมา');
+      await thought('อย่าให้ตะเกียงนั่นส่องเจอ... ตอนไฟดับ มันมองไม่เห็นอะไรเหมือนกัน');
+      setObjective('หาลิ้นชักของเธอ — อย่าให้พยาบาลเห็น');
+    });
+  },
+  map() {
+    const self = this;
+    const g = boxWalls(mkGrid(20, 13, '.'), 2);
+    'ABCDEFG'.split('').forEach((k, i) => g[1][3 + i * 2] = k);
+    [['H', 4], ['I', 7], ['J', 10], ['L', 13], ['M', 16]].forEach(([k, x]) => g[7][x] = k);
+    g[1][18] = 'X'; g[12][2] = 'Z';
+    g[10][4] = 'Q'; g[4][9] = 'R'; g[10][15] = 'R'; g[10][8] = 'R';
+    const drawer = (k, wall) => ({ id: 'd' + k, draw: 'morgueDrawer', layer: wall ? 'wall' : undefined, tag: k, on: async o => self.drawer(o) });
+    const legend = {
+      X: { id: 'exit', draw: 'door', layer: 'wall', color: '#3a3f44', on: async () => self.exit() },
+      Z: { id: 'in', draw: 'doorBottom', layer: 'wall', color: '#2a2e31', on: async () => { await say('', 'ประตูที่เข้ามาหายไปแล้ว เหลือแต่ผนังเย็นชื้น'); } },
+      Q: { id: 'log', draw: 'logDesk', on: async () => self.logbook() },
+      R: { draw: 'gurney', on: async () => { await say('', 'เตียงเข็นศพ ผ้าขาวคลุมรูปร่างของใครบางคน... มันยังอุ่นอยู่'); } },
+    };
+    'ABCDEFG'.split('').forEach(k => legend[k] = drawer(k, true));
+    'HIJLM'.split('').forEach(k => legend[k] = drawer(k, false));
+    return {
+      name: 'morgue', floor: 'tile', seed: 111, wall: { face: '#3a4044', stripe: '#353a3e', base: '#1a1d1f', top: '#060707' },
+      grid: gstr(g), legend, dark: () => self.st.blackout ? 0.985 : 0.9, playerLight: 70,
+      update(dt) { self.update(dt); },
+      lights: () => (self.nurse && !self.st.blackout) ? [{ x: self.nurse.x * TILE + 16, y: self.nurse.y * TILE + 12, r: 64, a: 0.85, color: self.st.alert ? '255,60,40' : '255,200,120', ga: 0.25 }] : [],
+      drawLight(c, cam) {
+        if (!self.nurse || self.st.blackout) return;
+        c.fillStyle = self.st.alert ? 'rgba(255,40,30,.16)' : 'rgba(255,200,120,.12)';
+        self.vision().forEach(([x, y]) => c.fillRect(x * TILE - cam.x + 1, y * TILE - cam.y + 1, TILE - 2, TILE - 2));
+      },
+    };
+  },
+  WAYPOINTS: [[2, 4], [17, 4], [17, 9], [2, 9]],
+  vision() {
+    const n = this.nurse, out = [];
+    if (!n) return out;
+    const [dx, dy] = DIRS[n.dir || 'down'];
+    const nx = Math.round(n.x), ny = Math.round(n.y);
+    for (const side of [0, -1, 1]) {
+      const sx = dy !== 0 ? side : 0, sy = dx !== 0 ? side : 0;
+      for (let d = 1; d <= 5; d++) {
+        if (side !== 0 && d < 2) continue;
+        const x = nx + dx * d + sx, y = ny + dy * d + sy;
+        if (!WALKABLE.has(tileAt(x, y)) || objsAt(x, y).some(o => o.solid !== false)) break;
+        out.push([x, y]);
+      }
+    }
+    return out;
+  },
+  update(dt) {
+    const st = this.st, n = this.nurse, p = G.player;
+    if (!n || !p || G.flags.spDone) return;
+    if (G.busy || Input.layers.length) return;
+    // blackouts: the lamp dies and she can't see
+    st.boT -= dt;
+    if (st.boT <= 0) {
+      st.blackout = !st.blackout;
+      st.boT = st.blackout ? 2.4 : 6.5 + Math.random() * 3;
+      if (st.blackout) { Sound.click(); Sound.whisper(); } else Sound.click();
+    }
+    n.dark = st.blackout;
+    // sight
+    if (!st.blackout && !st.alert) {
+      const px = Math.round(p.fx), py = Math.round(p.fy);
+      if (this.vision().some(([x, y]) => x === px && y === py)) this.alert(false);
+    }
+    if (st.alert && !st.rage) { st.chaseT -= dt; if (st.chaseT <= 0) { st.alert = false; n.alert = false; subtitle('เสียงฝีเท้าช้าลง... มันกลับไปเดินตรวจเหมือนเดิม', 2200, 'whisper'); } }
+    // movement
+    st.t -= dt;
+    const stepT = st.rage ? 0.2 : st.alert ? 0.23 : 0.5;
+    if (st.t <= 0) {
+      st.t = stepT;
+      let tx, ty;
+      if (st.alert || st.rage) { tx = p.x; ty = p.y; }
+      else {
+        [tx, ty] = this.WAYPOINTS[st.wp];
+        if (Math.round(n.x) === tx && Math.round(n.y) === ty) { st.wp = (st.wp + 1) % this.WAYPOINTS.length; [tx, ty] = this.WAYPOINTS[st.wp]; }
+      }
+      const nx = bfsStep(Math.round(n.x), Math.round(n.y), tx, ty, walkablePlain, 1500);
+      if (nx) {
+        n.dir = nx[0] > n.x ? 'right' : nx[0] < n.x ? 'left' : nx[1] > n.y ? 'down' : 'up';
+        n.moving = true; moveEnt(n, nx[0], nx[1], stepT * 900);
+        if (st.alert || st.rage) Sound.step();
+      } else n.moving = false;
+    }
+    if (Math.abs(n.x - p.fx) < 0.6 && Math.abs(n.y - p.fy) < 0.6) run(() => this.caught());
+  },
+  alert(loud) {
+    const st = this.st;
+    if (!st.alert) { Sound.stinger(); Sound.scream(0.5); subtitle(loud ? 'เสียงนั้นปลุกมันขึ้นมา!' : 'มันเห็นฉันแล้ว!', 2000, 'loud'); }
+    st.alert = true; st.chaseT = 6; this.nurse.alert = true;
+  },
+  async caught() {
+    const st = this.st;
+    if (st.catching) return; st.catching = true;
+    st.caught++;
+    Sound.scream(1.2); G.fx.glitch = 1;
+    hurt(20, 'มือเย็นเฉียบบีบคอฉันไว้!');
+    await say('พยาบาลไร้หน้า', st.rage ? 'ยังไม่ถึงเวลาออกไปค่ะ คุณปฐพี' : 'ผู้ป่วยห้ามลุกจากเตียงนะคะ...', { cls: 'shadow' });
+    await fade(1, 400);
+    const p = G.player; p.x = p.tx = 2; p.y = p.ty = 11; p.fx = 2; p.fy = 11; p.moving = false; p.dir = 'up';
+    const n = this.nurse; n.x = 17; n.y = 4; st.wp = 2; st.alert = false; n.alert = false; st.t = 1.2;
+    await fade(0, 600);
+    st.catching = false;
+  },
+  async logbook() {
+    await readNote('สมุดรับศพ', `เวรดึก — คืนวันที่ ██
+• ศพที่ "เขา" ตามหา ถูกนำมาจากที่เดียวกับที่เขาถูกนำส่ง
+• ป้ายข้อมือของเธอยังอยู่กับเขา <span class="blood">— ให้เขาดูเอาเอง</span>
+• ห้ามเปิดลิ้นชักผิดช่อง พวกที่อยู่ข้างในไม่ชอบให้ใครปลุก
+• ช่องที่เตรียมไว้ให้ "ผู้ขับขี่" ห้ามเปิดก่อนเวลา`);
+    if (hasItem('band')) await thought('ป้ายข้อมือที่ขุดได้ในสวน... ลองเปิดดูในสมุดอีกครั้ง');
+  },
+  async drawer(o) {
+    const tg = MORGUE_TAGS[o.tag];
+    if (o.open) { await say('', tg.right ? 'ลิ้นชักของเธอ... ฉันจะไม่ปล่อยให้เธออยู่ในนี้นาน' : 'ลิ้นชักที่ฉันเปิดผิด... อะไรบางอย่างข้างในยังขยับอยู่'); return; }
+    o.checked = true;
+    await say('', `ป้ายผูกลิ้นชัก: เพศ ${tg.sex} · ชื่อ ${tg.name}\nนำส่งจาก ${tg.from} · ${tg.how}`);
+    const c = await choose(['เปิดลิ้นชักช่องนี้', 'ไม่เปิด']);
+    if (c !== 0) return;
+    Sound.chain(); await wait(200);
+    o.open = true;
+    if (tg.right) return this.found(o);
+    if (tg.self) {
+      Sound.stinger(); flash('255,255,255', 0.6);
+      await say('', 'ลิ้นชักว่างเปล่า... ผ้าปูสะอาดถูกพับไว้อย่างเรียบร้อย มีป้ายเขียนชื่อฉันวางอยู่บนหมอน');
+      hurt(12);
+      await thought('มันรอฉันอยู่... ที่ตรงนี้มีไว้ให้ฉัน');
+    } else {
+      Sound.scream(0.9); shake(10, 700);
+      hurt(12, 'มือในลิ้นชักคว้าข้อมือฉัน!');
+      await say('', 'ร่างในลิ้นชักผุดลุกขึ้นมาคว้าข้อมือฉันไว้ เสียงโลหะกระแทกดังสนั่นไปทั้งห้อง');
+    }
+    o.open = false;
+    this.alert(true);
+  },
+  async found(o) {
+    Sound.breath();
+    await say('', 'ร่างผอมบางใต้ผ้าขาว ผมยาวสีดำ หูข้างหนึ่งยังมีต่างหูมุก... อีกข้างหายไป');
+    await thought('มิ้น...');
+    await say('', 'ในกำมือของเธอ มีกุญแจห้องเก็บศพดอกหนึ่ง... เหมือนเธอกำไว้รอให้ฉันมาเอา');
+    addItem('morguekey', 'กุญแจห้องเก็บศพ', 'กุญแจเหล็กเย็นเฉียบ ได้มาจากมือของเธอ');
+    G.flags.spKey = true;
+    Sound.rumble(1.5); shake(8, 1200);
+    await say('', 'ไฟทั้งห้องกะพริบถี่ๆ เสียงฝีเท้าข้างหลังเร็วขึ้น... เร็วขึ้น');
+    this.st.rage = true; this.st.alert = true; this.nurse.alert = true; this.st.blackout = false; this.st.boT = 99;
+    setObjective('วิ่งไปที่ประตูมุมขวาบน!'); setExit('exit');
+  },
+  async exit() {
+    if (!G.flags.spKey) { await lockedDoor('ประตูเหล็กล็อกแน่น ต้องใช้กุญแจห้องเก็บศพ'); return; }
+    Sound.unlock(); Sound.door();
+    G.flags.spDone = true;
+    await say('', 'ฉันกระแทกประตูปิดตามหลัง... เสียงเล็บข่วนเหล็กดังอยู่อีกฝั่ง แล้วเงียบไป');
+    await nextChapter();
+  },
+};
+
+const CHAPTERS = [null, CH1, CH2, CH3, CH4, CH5, CH6, CH7, CH8, CH9, CH10, SP];
+const SPECIAL_CH = 11;

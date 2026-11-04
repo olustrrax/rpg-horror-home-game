@@ -227,7 +227,8 @@ function fadeInstant(to, color = '#000') { const f = $('#fade'); f.style.transit
 
 async function chapterCard(num, th, en, when) {
   const el = $('#card-screen');
-  el.innerHTML = `<div class="cs-num">${num}</div><div class="cs-title">${th}</div><div class="cs-en">${en}</div><div class="cs-time">${when || ''}</div>`;
+  const rules = (window.chapterRulesHTML && /^บทที่/.test(num)) ? chapterRulesHTML() : '';
+  el.innerHTML = `<div class="cs-num">${num}</div><div class="cs-title">${th}</div><div class="cs-en">${en}</div><div class="cs-time">${when || ''}</div>${rules}`;
   el.hidden = false; el.style.opacity = 1; el.style.transition = 'opacity 1s';
   Sound.stinger();
   const g = G.gen;
@@ -235,11 +236,9 @@ async function chapterCard(num, th, en, when) {
     let can = false, done = false;
     setTimeout(() => can = true, 1400);
     const L = pushLayer({ freeze: true, key(a) { if (a === 'ok' && can) fin(); } });
-    const tm = setTimeout(fin, 4200);
+    const tm = setTimeout(fin, rules ? 7000 : 4200);
     function fin() { if (done) return; done = true; clearTimeout(tm); popLayer(L); res(); }
   });
-  if (g !== G.gen) return;
-  if (window.showChapterRules && G.chapter && /^บทที่/.test(num)) await showChapterRules();
   if (g !== G.gen) return;
   el.style.opacity = 0;
   await wait(900);
@@ -256,6 +255,7 @@ function updateSanityHUD() {
 }
 function hurt(n, why) {
   if (G.dead) return;
+  if (G.mode === 'hard') n = Math.round(n * 1.3);
   G.sanity = clamp(G.sanity - n, 0, 100); updateSanityHUD();
   G.fx.flash = Math.min(0.85, 0.35 + n / 30); G.fx.flashColor = '170,0,0';
   shake(4 + n / 3, 350); G.fx.glitch = Math.max(G.fx.glitch, 0.25 + n / 60);
@@ -312,7 +312,7 @@ function loadMap(def, px, py, dir = 'down') {
   buildTileCanvas(m);
   G.map = m;
   G.player = { x: px, y: py, tx: px, ty: py, fx: px, fy: py, dir, moving: false, mt: 0, step: 0, slow: 1 };
-  G.hidePlayer = false; G.playerPose = null;
+  G.hidePlayer = false; G.playerPose = null; G.exitHint = null;
   if (m.onLoad) m.onLoad(m);
   return m;
 }
@@ -539,6 +539,7 @@ function render() {
     list.sort((a, b) => a.y - b.y).forEach(i => i.d());
     vis.filter(o => o.layer === 'top').forEach(o => drawObj(o));
     if (m.drawAbove) m.drawAbove(ctx, G.t);
+    drawExitBeacon();
     ctx.restore();
     renderLighting(m);
     if (m.drawOverlay) m.drawOverlay(ctx, G.t);
@@ -555,6 +556,42 @@ function render() {
     }
   }
   postFX();
+  drawExitEdgeArrow();
+}
+/* ---------- exit guidance: arrow over the next door, edge arrow when off-screen ---------- */
+function setExit(id) { G.exitHint = id || null; }
+function exitTarget() {
+  if (!G.exitHint || !G.map || !G.running) return null;
+  const o = getObj(G.exitHint); if (!o || o.hidden) return null;
+  return { x: (o.x + (o.w || 1) / 2) * TILE, y: o.y * TILE, o };
+}
+function drawExitBeacon() {
+  const t = exitTarget(); if (!t) return;
+  const k = (Math.sin(G.t * 4) + 1) / 2;
+  const bob = Math.sin(G.t * 4) * 3;
+  // glow around the door
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const gr = ctx.createRadialGradient(t.x, t.y + 16, 2, t.x, t.y + 16, 34);
+  gr.addColorStop(0, `rgba(255,150,90,${0.25 + k * 0.2})`); gr.addColorStop(1, 'rgba(255,150,90,0)');
+  ctx.fillStyle = gr; ctx.fillRect(t.x - 36, t.y - 20, 72, 72);
+  ctx.restore();
+  // arrow
+  const ax = t.x, ay = t.y - 6 + bob;
+  ctx.beginPath(); ctx.moveTo(ax - 10, ay - 15); ctx.lineTo(ax + 10, ay - 15); ctx.lineTo(ax, ay); ctx.closePath();
+  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.85)'; ctx.stroke();
+  ctx.fillStyle = `rgb(255,${160 + k * 70},110)`; ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,230,.6)'; ctx.fillRect(ax - 5, ay - 13, 10, 2);
+}
+function drawExitEdgeArrow() {
+  const t = exitTarget(); if (!t) return;
+  const sx = t.x - G.cam.x, sy = t.y + 16 - G.cam.y, pad = 22;
+  if (sx > pad && sx < VW - pad && sy > pad && sy < VH - pad) return;
+  const cx = clamp(sx, pad, VW - pad), cy = clamp(sy, pad + 20, VH - pad);
+  const ang = Math.atan2(sy - VH / 2, sx - VW / 2);
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang);
+  ctx.globalAlpha = 0.6 + Math.sin(G.t * 5) * 0.3;
+  ctx.fillStyle = '#ffb27a'; ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-6, -7); ctx.lineTo(-2, 0); ctx.lineTo(-6, 7); ctx.fill();
+  ctx.restore();
 }
 function drawObj(o) {
   const x = o.x * TILE, y = o.y * TILE;
